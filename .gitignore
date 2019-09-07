@@ -1,2 +1,4 @@
 /token
-/venv
+/.venv
+*.pem
+*.conf

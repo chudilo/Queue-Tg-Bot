@@ -17,7 +17,7 @@ with open('token', 'r') as f:
 def sendMessage(chat_id, text="Test message"):
     url = URL + 'sendMessage'
     r = requests.post(url, json={'chat_id': chat_id, 'text': text})
-
+    return r.json()
 
 def getMe():
     url = URL + 'getMe'
