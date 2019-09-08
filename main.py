@@ -25,6 +25,35 @@ def getMe():
     return r.json()
 
 
+def answerMessage(message, info):
+    msg_txt = message['message']['text']
+    
+    if '/start' in msg_txt:
+        #Предложить выбрать никнейм
+        pass
+    
+    elif '/help' in msg_txt:
+        #Вывести список команд
+	pass
+    
+    elif '/come' in msg_txt:
+	#Добавить в список
+	pass
+
+    elif '/leave' in msg_txt:
+	#Убрать из списка
+	pass
+
+
+    elif '/info' in msg_txt:
+	#Вывести информацию об очередях
+	pass
+
+
+    elif '/
+    
+
+
 def main():
     people_at_location = None
     update_id = None
@@ -40,8 +69,9 @@ def main():
         print(json.dumps(resp, indent=4))
         if resp['result']:
             for message in resp['result']:
-                text = 'Ты написал мне ' + message['message']['text'].strip().lower()
-                sendMessage(message['message']['chat']['id'], text)
+                #text = 'Ты написал мне ' + message['message']['text'].strip().lower()
+                answer = answerMessage(message, inf)
+                sendMessage(message['message']['chat']['id'], answer)
             
             update_id = resp['result'][-1]['update_id'] + 1
 
