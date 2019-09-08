@@ -8,9 +8,9 @@ with open('token', 'r') as f:
 
 
 def getUpdates(update_id=1):
-    url = URL + '/getUpdate?offset=' + update_id
+    url = URL + '/getUpdates?offset=' + str(update_id)
     r = requests.get(url)
-    return r.json
+    return r.json()
 
 
 def sendMessage(chat_id, text="Test message"):
@@ -37,10 +37,11 @@ def main():
         
     while True:
         resp = getUpdates(update_id)
+        print(json.dumps(resp, indent=4))
         if resp['result']:
             for message in resp['result']:
-                text = 'Ты написал мне' + message['text'].strip().lower()
-                sendMessage(message['chat']['id'], text)
+                text = 'Ты написал мне ' + message['message']['text'].strip().lower()
+                sendMessage(message['message']['chat']['id'], text)
             
             update_id = resp['result'][-1]['update_id'] + 1
 
@@ -51,7 +52,7 @@ def main():
         else:
             pass
 
-        sleep(2)
+        time.sleep(2)
         
 
 
