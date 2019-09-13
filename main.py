@@ -41,7 +41,7 @@ def main():
     except Exception as e:
         print('here')
         #logging.warning("INFO OPEN BLOCK\n" + str(e.__class__) + '\n' + str(e))
-        logging.warning(e)
+        logging.exception(e)
         exit()
     
     while True:
@@ -56,11 +56,11 @@ def main():
                             print(response['text'])
                             sendMessage(response['chat_id'], response['text'])
                         except Exception as e:
-                            logging.warning("ANSWERING BLOCK\n" + str(e.__class__) + '\n' + e)
+                            logging.exception("ANSWERING BLOCK\n" + str(e.__class__) + '\n' + e)
 
                     except Exception as e:
                         #log("RESPONSE FORM BLOCK\n" + str(e.__class__) + '\n' + str(e), {'chat_id': message['message']['chat']['id'], 'text': message['message']['text']})
-                        logging.warning(e)
+                        logging.exception(e)
                         info.update_id += 1
                     finally:
                         info.save(INFONAME)
@@ -69,7 +69,7 @@ def main():
 
         except Exception as e:
             #logging.warning("REQUEST BLOCK\n" + str(e.__class__) + '\n' + e)
-            logging.warning(e)
+            logging.exception(e)
 
         time.sleep(2)
 

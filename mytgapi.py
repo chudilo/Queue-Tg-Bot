@@ -54,7 +54,6 @@ def answerMessage(message, info):
     msg_txt = message['message']['text']
     chat_id = message['message']['chat']['id']
     answer = random.choice(excuses)
-    inf = info
 
     if '/start' in msg_txt:
         answer = help_message()
@@ -81,7 +80,7 @@ def answerMessage(message, info):
         if len(msg_txt.split()) > 1:
             if msg_txt.split()[1].isdigit():
                 if 0 <= int(msg_txt.split()[1]) <= 25:
-                    inf['count_of_people'] = int(msg_txt.split()[1])
+                    info['count_of_people'] = info(msg_txt.split()[1])
                     answer = info_message(inf)
                 else:
                     answer = 'Я программист, меня не обманешь... почти.'
@@ -93,4 +92,4 @@ def answerMessage(message, info):
     else:
         answer = random.choice(excuses)
 
-    return {'chat_id': chat_id, 'text': answer}
+    return {'chat_id': chat_id, 'text': answer}, info
