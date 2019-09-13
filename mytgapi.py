@@ -21,9 +21,9 @@ def getUpdates(update_id=1):
     return r.json()
 
 
-def sendMessage(chat_id, text="Test message"):
+def sendMessage(chat_id, ="Test message"):
     url = URL + '/sendMessage'
-    r = requests.post(url, json={'chat_id': chat_id, 'text': text})
+    r = requests.post(url, json={'chat_id': chat_id, '': })
     return r.json()
 
 
@@ -45,16 +45,15 @@ def help_message():
     return string
 
 
-def info_message(inf):
-    string = "Количество людей на южке: " + str(inf['count_of_people'])
+def info_message(info):
+    string = "Количество людей на южке: " + str(info['count_of_people'])
     return string
 
 
 def answerMessage(message, info):
-    msg_txt = message['message']['text']
+    msg_txt = message['message']['']
     chat_id = message['message']['chat']['id']
     answer = random.choice(excuses)
-    inf = info
 
     if '/start' in msg_txt:
         answer = help_message()
@@ -81,8 +80,8 @@ def answerMessage(message, info):
         if len(msg_txt.split()) > 1:
             if msg_txt.split()[1].isdigit():
                 if 0 <= int(msg_txt.split()[1]) <= 25:
-                    inf['count_of_people'] = int(msg_txt.split()[1])
-                    answer = info_message(inf)
+                    info['count_of_people'] = int(msg_txt.split()[1])
+                    answer = info_message(info)
                 else:
                     answer = 'Я программист, меня не обманешь... почти.'
             else:
@@ -93,4 +92,4 @@ def answerMessage(message, info):
     else:
         answer = random.choice(excuses)
 
-    return {'chat_id': chat_id, 'text': answer}
+    return {'chat_id': chat_id, '': answer}, info
