@@ -5,13 +5,15 @@ import random
 excuses = ('Что-то пошло не так...',
             'Мне лень...',
             'Рут не дописан...',
-            'А может лучше в памп поиграем?'
+            'А может лучше в памп поиграем?',
             '*Смешная фраза для ответа на непредвиденные команды*',
             'Ачивки тебе за это не дадут')
+
 
 URL = 'https://api.telegram.org/bot'
 with open('token', 'r') as f:
     URL += f.read().strip()
+
 
 def getUpdates(update_id=1):
     url = URL + '/getUpdates?offset=' + str(update_id)
@@ -35,9 +37,9 @@ def help_message():
     string = "Все команды вводятся в формате /setcount [число]\n" +\
     "Извините, я упячко (I will fix it)\n"+\
     "/help - вывести список команд;\n" +\
-    "```/nick``` - задать себе имя\n" +\
-    "```/come``` - приехать на южку;\n" +\
-    "```/leave``` - уехать с южки;\n" +\
+    "__/nick - задать себе имя\n" +\
+    "__/come - приехать на южку;\n" +\
+    "__/leave - уехать с южки;\n" +\
     "/setcount - расскажите, сколько людей сейчас на пампе;\n" +\
     "/info - узнать количество людей;\n"
     return string
@@ -51,7 +53,7 @@ def info_message(inf):
 def answerMessage(message, info):
     msg_txt = message['message']['text']
     chat_id = message['message']['chat']['id']
-    answer = None
+    answer = random.choice(excuses)
     inf = info
 
     if '/start' in msg_txt:
@@ -72,16 +74,19 @@ def answerMessage(message, info):
 
 
     elif '/info' in msg_txt:
-        answer = info_message()
+        answer = info_message(inf)
         pass
 
     elif '/setcount' in msg_txt:
-        if msg.split()[1].isdigit():
-            if 0 <= int(msg.split()[1]) <= 25:
-                inf['count_of_people'] = int(msg.split()[1])
-                answer = info_message()
+        if len(msg_txt.split()) > 1:
+            if msg_txt.split()[1].isdigit():
+                if 0 <= int(msg_txt.split()[1]) <= 25:
+                    inf['count_of_people'] = int(msg_txt.split()[1])
+                    answer = info_message(inf)
+                else:
+                    answer = 'Я программист, меня не обманешь... почти.'
             else:
-                answer = 'Я программист, меня не обманешь... почти.'
+                answer = "Неверный формат сообщения"
         else:
             answer = "Неверный формат сообщения"
 
