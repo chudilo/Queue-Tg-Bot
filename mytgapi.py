@@ -21,9 +21,9 @@ def getUpdates(update_id=1):
     return r.json()
 
 
-def sendMessage(chat_id, ="Test message"):
+def sendMessage(chat_id, text="Test message"):
     url = URL + '/sendMessage'
-    r = requests.post(url, json={'chat_id': chat_id, '': })
+    r = requests.post(url, json={'chat_id': chat_id, 'text': text })
     return r.json()
 
 
@@ -77,6 +77,7 @@ def answerMessage(message, info):
         pass
 
     elif '/setcount' in msg_txt:
+        '''
         if len(msg_txt.split()) > 1:
             if msg_txt.split()[1].isdigit():
                 if 0 <= int(msg_txt.split()[1]) <= 25:
@@ -88,7 +89,10 @@ def answerMessage(message, info):
                 answer = "Неверный формат сообщения"
         else:
             answer = "Неверный формат сообщения"
-
+        '''
+        answer = 'Сорянннн'
+        pass
+        
     else:
         answer = random.choice(excuses)
 

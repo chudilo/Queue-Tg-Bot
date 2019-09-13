@@ -5,9 +5,10 @@ import logging
 
 from mytgapi import getMe, getUpdates, sendMessage, answerMessage
 
-format = """%(asctime)s ~~~ %(message)s
+format = """
 ----------------------------------------------
-"""
+%(asctime)s ~~~
+%(message)s """
 
 class Info(object):
     def __init__(self, filename):
@@ -24,8 +25,9 @@ class Info(object):
                 'update_id': self.update_id}
             json.dump(info, f, indent=4)
 
+
 def log(err_msg, tg_info):
-    logging.warning('chat_id:' + str(tg_info['chat_id']) + '; text: ' + 
+    logging.warning('chat_id:' + str(tg_info['chat_id']) + '; text: ' +
 str(tg_info['text']) + '\n' + err_msg)
 
 LOGNAME = 'logging.log'
@@ -39,11 +41,10 @@ def main():
     try:
         info = Info(INFONAME)
     except Exception as e:
-        print('here')
         #logging.warning("INFO OPEN BLOCK\n" + str(e.__class__) + '\n' + str(e))
         logging.exception(e)
         exit()
-    
+
     while True:
         try:
             messages = getUpdates(info.update_id)
@@ -51,7 +52,8 @@ def main():
                 for message in messages['result']:
                     try:
                         print(message['message']['text'])
-                        response, info = answerMessage(message, info)
+                        response, new_info = answerMessage(message, info)
+                        info = new_info
                         try:
                             print(response['text'])
                             sendMessage(response['chat_id'], response['text'])
@@ -64,7 +66,6 @@ def main():
                         info.update_id += 1
                     finally:
                         info.save(INFONAME)
-
 
 
         except Exception as e:
