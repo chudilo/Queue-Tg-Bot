@@ -5,42 +5,56 @@ import logging
 
 from mytgapi import getMe, getUpdates, sendMessage, answerMessage
 
-logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', filename='logging.log',level=logging.DEBUG)
+format = """%(asctime)s ~~~ %(message)s
+----------------------------------------------
+"""
+
+class Info(object):
+    def __init__(self, filename):
+        with open(filename, 'r') as f:
+            info = json.load(f)
+            self.count_of_people = info['count_of_people']
+            self.people = info['people']
+            self.update_id = info['update_id']
+
+    def save(self, filename):
+        with open(filename, 'w') as f:
+            info = {'count_of_people' : self.count_of_people,
+                'people' : self.people,
+                'update_id': self.update_id}
+            json.dump(info, f, indent=4)
+
+
+LOGNAME = 'logging.log'
+logging.basicConfig(format=format, datefmt='%m/%d/%Y %I:%M:%S %p', filename=LOGNAME,level=logging.DEBUG)
+
 
 def main():
-    count_of_people = None
-    update_id = None
-    inf = None
-
-    with open('info.conf', 'r') as f:
-        inf = json.load(f)
-        count_of_people = inf['count_of_people']
-        update_id = inf['update_id']
+    info = None #has count_of_people, people and update_id fields
+    try:
+        info = Info(LOGNAME)
+    except Exception as e:
+        logging.warning("INFO OPEN BLOCK\n" + str(e.__class__) + '\n' + str(e))
+        exit()
 
     while True:
         try:
-            resp = getUpdates(update_id)
-            print(json.dumps(resp, indent=4))
-            if resp['result']:
-                for message in resp['result']:
-                    #text = 'Ты написал мне ' + message['message']['text'].strip().lower()
-                    answer, inf = answerMessage(message, inf)
-                    sendMessage(message['message']['chat']['id'], answer)
+            messages = getUpdates(update_id)
+            if messages:
+                for message in messages:
+                    try:
+                        response, info = answerMessage(message, info)
+                        info.save(LOGNAME)
+                        sendMessage(response['chat_id'], response['text'])
 
-                update_id = resp['result'][-1]['update_id'] + 1
 
-                with open('info.conf', 'w') as f:
-                    inf['update_id'] = update_id
-                    json.dump(inf, f, indent=4)
+                    except Exception as e:
+                        logging.warning("RESPONSE BLOCK\n" + str(e.__class__) + '\n' + str(e))
 
-            else:
-                pass
         except Exception as e:
-            print(e.__class__)
-            logging.warning(e)
+            logging.warning("REQUEST BLOCK\n" + str(e.__class__) + '\n' + str(e))
 
         time.sleep(2)
-
 
 
 if __name__ == '__main__':

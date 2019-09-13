@@ -3,4 +3,4 @@
 *.pem
 *.conf
 *pycache*
-*.log
+*.log*
