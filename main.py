@@ -44,12 +44,18 @@ def main():
                 for message in messages:
                     try:
                         response, info = answerMessage(message, info)
-                        info.save(LOGNAME)
-                        sendMessage(response['chat_id'], response['text'])
-
+                        try:
+                            sendMessage(response['chat_id'], response['text'])
+                        except Exception as e:
+                            logging.warning("ANSWERING BLOCK\n" + str(e.__class__) + '\n' + str(e))
 
                     except Exception as e:
-                        logging.warning("RESPONSE BLOCK\n" + str(e.__class__) + '\n' + str(e))
+                        logging.warning("RESPONSE FORM BLOCK\n" + str(e.__class__) + '\n' + str(e))
+                        info.update_id += 1
+                    finally:
+                        info.save(LOGNAME)
+
+
 
         except Exception as e:
             logging.warning("REQUEST BLOCK\n" + str(e.__class__) + '\n' + str(e))
