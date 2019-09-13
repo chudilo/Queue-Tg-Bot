@@ -92,4 +92,4 @@ def answerMessage(message, info):
     else:
         answer = random.choice(excuses)
 
-    return {'chat_id': chat_id, '': answer}, info
+    return {'chat_id': chat_id, 'text': answer},  info
