@@ -48,6 +48,7 @@ def main():
     while True:
         try:
             messages = getUpdates(info.update_id)
+            print(messages)
             if messages['result']:
                 for message in messages['result']:
                     try:

@@ -51,7 +51,7 @@ def info_message(info):
 
 
 def answerMessage(message, info):
-    msg_txt = message['message']['']
+    msg_txt = message['message']['text']
     chat_id = message['message']['chat']['id']
     answer = random.choice(excuses)
 
