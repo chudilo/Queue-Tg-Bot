@@ -2,8 +2,9 @@ import requests
 import json
 import time
 import logging
+import sqlite3
 
-from mytgapi import getMe, getUpdates, sendMessage, answerMessage
+from mytgapi import getMe, getUpdates, sendMessage, handleMessage
 
 format = """
 ----------------------------------------------
@@ -34,6 +35,17 @@ LOGNAME = 'logging.log'
 INFONAME = 'info.conf'
 logging.basicConfig(format=format, datefmt='%m/%d/%Y %I:%M:%S %p', filename=LOGNAME,level=logging.WARNING)
 
+db = sqlite3.connect('data/UserDB')
+cursor = db.cursor()
+try:
+    cursor.execute('''
+        CREATE TABLE users(id INTEGER PRIMARY KEY, nickname TEXT,
+                           chat_id TEXT, flags TEXT)
+    ''')
+    db.commit()
+except Exception as e:
+    logging.exception(e)
+
 
 def main():
     #logging.warning("This is warning test log")
@@ -53,7 +65,7 @@ def main():
                 for message in messages['result']:
                     try:
                         print(message['message']['text'])
-                        response, new_info = answerMessage(message, info)
+                        response, new_info, cursor = handleMessage(message, info, cursor)
                         info = new_info
                         try:
                             print(response['text'])

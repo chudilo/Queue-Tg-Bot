@@ -50,19 +50,42 @@ def info_message(info):
     return string
 
 
-def answerMessage(message, info):
+def startHandler(message, cursor):
+    flags = {"presence": False, "setcount": False, "nickname": False }
+    try:
+        cursor.execute('''INSERT INTO users(nickname, chat_id, flags)
+VALUES(?,?)''', ('User Unknown', message['message']['chat']['id'], json.dumps(flags)))
+    except Exception as e:
+        print("DB insert error")
+        print(e)
+# DONT LEAVE THAT LIKE THIS !!!!!!!!!!!!!!!!!
+
+    return help_message(), cursor
+
+def handleMessage(message, info, cursor):
     msg_txt = message['message']['text']
     chat_id = message['message']['chat']['id']
     answer = random.choice(excuses)
 
+    person = cursor.execute('''SELECT flags FROM users WHERE chat_id=?''', (chat_id))
+    flags = cursor.fetchone()
+    print("Here flags:")
+    print(flags)
+
     if '/start' in msg_txt:
-        answer = help_message()
-        pass
+        answer, cursor = startHandler(message, cursor)
 
     elif '/help' in msg_txt:
         answer = help_message()
-        pass
 
+    elif '/info' in msg_txt:
+        answer = info_message(inf)
+
+    elif '/setcount' in msg_txt:
+        cursor
+        answer =
+        pass
+'''
     elif '/come' in msg_txt:
         #sendMessage(chat_id, help_message())
         pass
@@ -70,29 +93,8 @@ def answerMessage(message, info):
     elif '/leave' in msg_txt:
         #Убрать из списка
         pass
+'''
 
-
-    elif '/info' in msg_txt:
-        answer = info_message(inf)
-        pass
-
-    elif '/setcount' in msg_txt:
-        '''
-        if len(msg_txt.split()) > 1:
-            if msg_txt.split()[1].isdigit():
-                if 0 <= int(msg_txt.split()[1]) <= 25:
-                    info['count_of_people'] = int(msg_txt.split()[1])
-                    answer = info_message(info)
-                else:
-                    answer = 'Я программист, меня не обманешь... почти.'
-            else:
-                answer = "Неверный формат сообщения"
-        else:
-            answer = "Неверный формат сообщения"
-        '''
-        answer = 'Сорянннн'
-        pass
-        
     else:
         answer = random.choice(excuses)
 
