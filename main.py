@@ -6,10 +6,6 @@ import sqlite3
 
 from mytgapi import getMe, getUpdates, sendMessage, handleMessage
 
-format = """
-----------------------------------------------
-%(asctime)s ~~~
-%(message)s """
 
 class Info(object):
     def __init__(self, filename):
@@ -33,21 +29,28 @@ str(tg_info['text']) + '\n' + err_msg)
 
 LOGNAME = 'logging.log'
 INFONAME = 'info.conf'
+
+format = """
+----------------------------------------------
+%(asctime)s ~~~
+%(message)s """
 logging.basicConfig(format=format, datefmt='%m/%d/%Y %I:%M:%S %p', filename=LOGNAME,level=logging.WARNING)
 
-db = sqlite3.connect('data/UserDB')
-cursor = db.cursor()
-try:
-    cursor.execute('''
-        CREATE TABLE users(id INTEGER PRIMARY KEY, nickname TEXT,
-                           chat_id TEXT, flags TEXT)
-    ''')
-    db.commit()
-except Exception as e:
-    logging.exception(e)
+
 
 
 def main():
+    db = sqlite3.connect('data/UserDB')
+
+    cursor = db.cursor()
+    try:
+        cursor.execute('''
+            CREATE TABLE users(id INTEGER PRIMARY KEY, nickname TEXT,
+                               chat_id TEXT, flags TEXT)
+        ''')
+        db.commit()
+    except Exception as e:
+        logging.exception(e)
     #logging.warning("This is warning test log")
     info = None #has count_of_people, people and update_id fields
     try:
@@ -59,17 +62,21 @@ def main():
 
     while True:
         try:
-            messages = getUpdates(info.update_id)
-            print(messages)
+            #messages = getUpdates(info.update_id)
+            #print(messages)
+            messages = {}
+            messages['result'] = [{"message": {'text': input(), 'chat': {'id': 100500}}}]
             if messages['result']:
                 for message in messages['result']:
                     try:
+                        print("Tut?")
                         print(message['message']['text'])
-                        response, new_info, cursor = handleMessage(message, info, cursor)
+                        response, new_info = handleMessage(message, info, cursor)
                         info = new_info
+                        db.commit()
                         try:
                             print(response['text'])
-                            sendMessage(response['chat_id'], response['text'])
+                            #sendMessage(response['chat_id'], response['text'])
                         except Exception as e:
                             logging.exception("ANSWERING BLOCK\n" + str(e.__class__) + '\n' + e)
 
@@ -78,6 +85,7 @@ def main():
                         logging.exception(e)
                         info.update_id += 1
                     finally:
+                        #print(info)
                         info.save(INFONAME)
 
 

@@ -1,6 +1,8 @@
+/data
 /token
 /.venv
 *.pem
 *.conf
 *pycache*
 *.log*
+

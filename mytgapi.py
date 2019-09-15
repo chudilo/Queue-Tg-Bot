@@ -1,13 +1,21 @@
 import requests
 import json
 import random
+import logging
 
-excuses = ('Что-то пошло не так...',
+format = """
+----------------------------------------------
+%(asctime)s ~~~
+%(message)s """
+LOGNAME = 'logging.log'
+logging.basicConfig(format=format, datefmt='%m/%d/%Y %I:%M:%S %p', filename=LOGNAME,level=logging.WARNING)
+
+excuses = ('Я тебя не понимать.',
             'Мне лень...',
             'Рут не дописан...',
             'А может лучше в памп поиграем?',
             '*Смешная фраза для ответа на непредвиденные команды*',
-            'Ачивки тебе за это не дадут')
+            'Ачивки тебе за это не дадут.')
 
 
 URL = 'https://api.telegram.org/bot'
@@ -46,7 +54,7 @@ def help_message():
 
 
 def info_message(info):
-    string = "Количество людей на южке: " + str(info['count_of_people'])
+    string = "Количество людей на южке: " + str(info.count_of_people)
     return string
 
 
@@ -54,9 +62,9 @@ def startHandler(message, cursor):
     flags = {"presence": False, "setcount": False, "nickname": False }
     try:
         cursor.execute('''INSERT INTO users(nickname, chat_id, flags)
-VALUES(?,?)''', ('User Unknown', message['message']['chat']['id'], json.dumps(flags)))
+VALUES(?,?,?)''', ('User Unknown', message['message']['chat']['id'], json.dumps(flags)))
     except Exception as e:
-        print("DB insert error")
+        print("~~DB insert error~~")
         print(e)
 # DONT LEAVE THAT LIKE THIS !!!!!!!!!!!!!!!!!
 
@@ -67,35 +75,54 @@ def handleMessage(message, info, cursor):
     chat_id = message['message']['chat']['id']
     answer = random.choice(excuses)
 
-    person = cursor.execute('''SELECT flags FROM users WHERE chat_id=?''', (chat_id))
+    person = cursor.execute('''SELECT flags FROM users WHERE chat_id=?''', (chat_id, ))
     flags = cursor.fetchone()
-    print("Here flags:")
-    print(flags)
+    if flags:
+        flags = json.loads(flags[0])
 
+    print("FLAGS:\n")
+    print(flags)
     if '/start' in msg_txt:
-        answer, cursor = startHandler(message, cursor)
+        if not flags:
+            startHandler(message, cursor)
+        answer = help_message()
 
     elif '/help' in msg_txt:
         answer = help_message()
 
     elif '/info' in msg_txt:
-        answer = info_message(inf)
+        answer = info_message(inf0)
 
     elif '/setcount' in msg_txt:
-        cursor
-        answer =
-        pass
-'''
-    elif '/come' in msg_txt:
-        #sendMessage(chat_id, help_message())
-        pass
-
-    elif '/leave' in msg_txt:
-        #Убрать из списка
-        pass
-'''
+        if not flags['setcount']:
+            flags['setcount'] = True
+            cursor.execute('''UPDATE users SET flags=? WHERE chat_id=?''', (json.dumps(flags),chat_id,))
+            answer = "Напишите, сколько людей сейчас на локации:"
 
     else:
-        answer = random.choice(excuses)
+        if flags['setcount']:
+            flags['setcount'] = False
+            cursor.execute('''UPDATE users SET flags=? WHERE chat_id=?''', (json.dumps(flags),chat_id,))
+            if msg_txt.strip().isdigit():
+                num = int(msg_txt.strip())
+                if 0 <= num <= 25:
+                    info.count_of_people = num
+                    answer = info_message(info)
+                else:
+                    answer = "Я программист, меня не обманешь..."
+            else:
+                answer = "Неправильный формат ввода"
 
+        else:
+            answer = random.choice(excuses)
+
+    '''
+        elif '/come' in msg_txt:
+            #sendMessage(chat_id, help_message())
+            pass
+
+        elif '/leave' in msg_txt:
+            #Убрать из списка
+            pass
+    '''
     return {'chat_id': chat_id, 'text': answer},  info
