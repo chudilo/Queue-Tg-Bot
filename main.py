@@ -75,16 +75,17 @@ def main():
                         db.commit()
                         try:
                             print(response['text'])
-                            #sendMessage(response['chat_id'], response['text'])
+                            sendMessage(response['chat_id'], response['text'])
                         except Exception as e:
                             logging.exception("ANSWERING BLOCK\n" + str(e.__class__) + '\n' + e)
 
                     except Exception as e:
                         #log("RESPONSE FORM BLOCK\n" + str(e.__class__) + '\n' + str(e), {'chat_id': message['message']['chat']['id'], 'text': message['message']['text']})
                         logging.exception(e)
-                        info.update_id += 1
+                        #info.update_id += 1
                     finally:
-                        #print(info)
+                        info.update_id += 1
+                        print("Update_id" + str(info.update_id))
                         info.save(INFONAME)
 
 

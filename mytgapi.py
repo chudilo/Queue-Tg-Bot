@@ -45,14 +45,13 @@ def getMe():
 
 
 def help_message():
-    string = "Все команды вводятся в формате /setcount [число]\n" +\
-    "Извините, я упячко (I will fix it)\n"+\
+    string = "Uzka Queue Bot v1.0\nИзвините, я упячко (I will fix it, probably)\n\n"+\
     "/help - вывести список команд;\n" +\
-    "__/nick - задать себе имя\n" +\
+    "/info - узнать количество человек на южке\n\n" +\
+    "__/nick - задать себе имя\n\n" +\
+    "/setcount - задать количество человек на локации\n"+\
     "__/come - приехать на южку;\n" +\
-    "__/leave - уехать с южки;\n" +\
-    "/setcount - расскажите, сколько людей сейчас на пампе;\n" +\
-    "/info - узнать количество людей;\n"
+    "__/leave - уехать с южки;\n"
     return string
 
 
@@ -94,9 +93,9 @@ def handleMessage(message, info, cursor):
     elif '/help' in msg_txt:
         answer = help_message()
 
-    time = datetime.datetime.utcnow()
+    #time = datetime.datetime.utcnow()
 
-    if time.hour < 7 and time.hour > 9:
+    elif datetime.datetime.utcnow().hour < 7 and datetime.datetime.utcnow().hour > 9:
         info.count_of_people = 0
         answer = "Южка спит и детки спят\nЗавтра пампить захотят."
     else:
