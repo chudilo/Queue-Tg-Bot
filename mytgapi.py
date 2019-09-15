@@ -2,6 +2,9 @@ import requests
 import json
 import random
 import logging
+import datetime
+
+import datetime
 
 format = """
 ----------------------------------------------
@@ -80,8 +83,9 @@ def handleMessage(message, info, cursor):
     if flags:
         flags = json.loads(flags[0])
 
-    print("FLAGS:\n")
+    print("FLAGS:")
     print(flags)
+
     if '/start' in msg_txt:
         if not flags:
             startHandler(message, cursor)
@@ -90,31 +94,37 @@ def handleMessage(message, info, cursor):
     elif '/help' in msg_txt:
         answer = help_message()
 
-    elif '/info' in msg_txt:
-        answer = info_message(inf0)
+    time = datetime.datetime.utcnow()
 
-    elif '/setcount' in msg_txt:
-        if not flags['setcount']:
-            flags['setcount'] = True
-            cursor.execute('''UPDATE users SET flags=? WHERE chat_id=?''', (json.dumps(flags),chat_id,))
-            answer = "Напишите, сколько людей сейчас на локации:"
-
+    if time.hour < 7 and time.hour > 9:
+        info.count_of_people = 0
+        answer = "Южка спит и детки спят\nЗавтра пампить захотят."
     else:
-        if flags['setcount']:
-            flags['setcount'] = False
-            cursor.execute('''UPDATE users SET flags=? WHERE chat_id=?''', (json.dumps(flags),chat_id,))
-            if msg_txt.strip().isdigit():
-                num = int(msg_txt.strip())
-                if 0 <= num <= 25:
-                    info.count_of_people = num
-                    answer = info_message(info)
-                else:
-                    answer = "Я программист, меня не обманешь..."
-            else:
-                answer = "Неправильный формат ввода"
+        if '/info' in msg_txt:
+            answer = info_message(info)
+
+        elif '/setcount' in msg_txt:
+            if not flags['setcount']:
+                flags['setcount'] = True
+                cursor.execute('''UPDATE users SET flags=? WHERE chat_id=?''', (json.dumps(flags),chat_id,))
+                answer = "Напишите, сколько людей сейчас на локации:"
 
         else:
-            answer = random.choice(excuses)
+            if flags['setcount']:
+                flags['setcount'] = False
+                cursor.execute('''UPDATE users SET flags=? WHERE chat_id=?''', (json.dumps(flags),chat_id,))
+                if msg_txt.strip().isdigit():
+                    num = int(msg_txt.strip())
+                    if 0 <= num <= 25:
+                        info.count_of_people = num
+                        answer = info_message(info)
+                    else:
+                        answer = "Я программист, меня не обманешь..."
+                else:
+                    answer = "Неправильный формат ввода"
+
+            else:
+                answer = random.choice(excuses)
 
     '''
         elif '/come' in msg_txt:

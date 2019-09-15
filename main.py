@@ -62,14 +62,13 @@ def main():
 
     while True:
         try:
-            #messages = getUpdates(info.update_id)
+            messages = getUpdates(info.update_id)
             #print(messages)
-            messages = {}
-            messages['result'] = [{"message": {'text': input(), 'chat': {'id': 100500}}}]
+            #messages = {}
+            #messages['result'] = [{"message": {'text': input(), 'chat': {'id': 100500}}}]
             if messages['result']:
                 for message in messages['result']:
                     try:
-                        print("Tut?")
                         print(message['message']['text'])
                         response, new_info = handleMessage(message, info, cursor)
                         info = new_info
