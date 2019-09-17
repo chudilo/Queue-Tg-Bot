@@ -3,6 +3,7 @@ import json
 import time
 import logging
 import sqlite3
+import datetime
 
 from mytgapi import getMe, getUpdates, sendMessage, handleMessage
 
@@ -14,12 +15,14 @@ class Info(object):
             self.count_of_people = int(info['count_of_people'])
             self.people = info['people']
             self.update_id = int(info['update_id'])
+            self.last_update = datetime.strptime(info['last_update'], "%Y-%m-%d %H:%M:%S.%f")
 
     def save(self, filename):
         with open(filename, 'w') as f:
             info = {'count_of_people' : self.count_of_people,
                 'people' : self.people,
-                'update_id': self.update_id}
+                'update_id': self.update_id,
+                'last_update': self.last_update}
             json.dump(info, f, indent=4)
 
 

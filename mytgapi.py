@@ -59,6 +59,13 @@ def info_message(info):
     string = "Количество людей на южке: " + str(info.count_of_people)
     return string
 
+def info_message_time(info):
+    delt = datetime.datetime.utcnow() - info.last_update
+    if delt.seconds/3600 <9:
+        return "Последне обновление: " + info.last_update..strftime("%H:%M")
+    else
+        return None
+
 
 def startHandler(message, cursor):
     flags = {"presence": False, "setcount": False, "nickname": False }
@@ -95,12 +102,13 @@ def handleMessage(message, info, cursor):
 
     #time = datetime.datetime.utcnow()
 
-    elif datetime.datetime.utcnow().hour < 7 and datetime.datetime.utcnow().hour > 9:
+elif datetime.datetime.utcnow().hour < 7 or datetime.datetime.utcnow().hour > 9:
         info.count_of_people = 0
         answer = "Южка спит и детки спят\nЗавтра пампить захотят."
     else:
         if '/info' in msg_txt:
             answer = info_message(info)
+            answer += "\n" + info_message_time(info)
 
         elif '/setcount' in msg_txt:
             if not flags['setcount']:
@@ -108,22 +116,37 @@ def handleMessage(message, info, cursor):
                 cursor.execute('''UPDATE users SET flags=? WHERE chat_id=?''', (json.dumps(flags),chat_id,))
                 answer = "Напишите, сколько людей сейчас на локации:"
 
-        else:
-            if flags['setcount']:
-                flags['setcount'] = False
-                cursor.execute('''UPDATE users SET flags=? WHERE chat_id=?''', (json.dumps(flags),chat_id,))
-                if msg_txt.strip().isdigit():
-                    num = int(msg_txt.strip())
-                    if 0 <= num <= 25:
-                        info.count_of_people = num
-                        answer = info_message(info)
-                    else:
-                        answer = "Я программист, меня не обманешь..."
+        elif flags['setcount']:
+            flags['setcount'] = False
+            cursor.execute('''UPDATE users SET flags=? WHERE chat_id=?''', (json.dumps(flags),chat_id,))
+            if msg_txt.strip().isdigit():
+                num = int(msg_txt.strip())
+                if 0 <= num <= 25:
+                    info.count_of_people = num
+                    answer = info_message(info)
                 else:
-                    answer = "Неправильный формат ввода"
-
+                    answer = "Я программист, меня не обманешь..."
             else:
-                answer = random.choice(excuses)
+                answer = "Неправильный формат ввода"
+
+        elif '/nick' in msg_txt:
+            if not flags['nickname']:
+                flags['nickname'] = True
+                cursor.execute('''UPDATE users SET flags=? WHERE chat_id=?''', (json.dumps(flags),chat_id,))
+                answer = "Напишите ваш новый ник:"
+
+        elif flags['nickname']:
+            flags['nickname'] = False
+            cursor.execute('''UPDATE users SET flags=? WHERE chat_id=?''', (json.dumps(flags),chat_id,))
+            nick = msg_txt.strip()
+            if nick(len) <= 10:
+                cursor.execute('''UPDATE users SET nickname=? WHERE chat_id=?''', (ncik,chat_id,))
+                answer = "Приветствую, " + nick + "!"
+            else:
+                answer = "Слишком большой! (макс. 10 символов)"
+
+        else:
+            answer = random.choice(excuses)
 
     '''
         elif '/come' in msg_txt:
