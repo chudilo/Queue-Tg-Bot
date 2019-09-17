@@ -50,13 +50,18 @@ def help_message():
     "/info - узнать количество человек на южке\n\n" +\
     "/nick - задать себе имя\n\n" +\
     "/setcount - задать количество человек на локации\n"+\
-    "__/come - приехать на южку;\n" +\
-    "__/leave - уехать с южки;\n"
+    "/come - приехать на южку;\n" +\
+    "/leave - уехать с южки;\n"
     return string
 
 
 def info_message(info):
     string = "Количество людей на южке: " + str(info.count_of_people)
+    if info.people:
+        string += "\n"
+        for person in info.people:
+            string += person + "; "
+        string += str(info.count_of_people - len(info.people)) + " рандома"
     return string
 
 def info_message_time(info):
@@ -83,14 +88,14 @@ def handleMessage(message, info, cursor):
     msg_txt = message['message']['text']
     chat_id = message['message']['chat']['id']
     answer = random.choice(excuses)
-
+    
     person = cursor.execute('''SELECT flags FROM users WHERE chat_id=?''', (chat_id, ))
     flags = cursor.fetchone()
     if flags:
         flags = json.loads(flags[0])
-
+    #flags = {"presence": False, "setcount": False, "nickname": False}
     print(flags)
-
+    
     if '/start' in msg_txt:
         if not flags:
             startHandler(message, cursor)
@@ -124,9 +129,12 @@ def handleMessage(message, info, cursor):
             if msg_txt.strip().isdigit():
                 num = int(msg_txt.strip())
                 if 0 <= num <= 25:
-                    info.count_of_people = num
-                    info.last_update = datetime.datetime.utcnow() + datetime.timedelta(hours=3)
-                    answer = info_message(info)
+                    if num < len(info.people):
+                        answer = "Я чувствую подвох. Уровень искуственного интеллекта на земле еще не настолько развит, чтобы понять, сколько людей сейчас на южке"
+                    else: 
+                        info.count_of_people = num
+                        info.last_update = datetime.datetime.utcnow() + datetime.timedelta(hours=3)
+                        answer = info_message(info)
                 else:
                     answer = "Я программист, меня не обманешь..."
             else:
@@ -151,6 +159,37 @@ def handleMessage(message, info, cursor):
                 answer = "Приветствую, " + nick + "!"
             else:
                 answer = "Слишком большой! (макс. 10 символов)"
+
+        elif '/come' in msg_txt:
+            if flags['presence']:
+                answer = "Я знаю, что ты здесь)"
+            else:
+                info.count_of_people += 1
+                info.last_update = datetime.datetime.utcnow() + datetime.timedelta(hours=3)
+                flags['presence'] = True
+                cursor.execute('''UPDATE users SET flags=? WHERE chat_id=?''', (json.dumps(flags),chat_id,))
+
+                nick = cursor.execute('''SELECT nickname FROM users WHERE chat_id=?''', (chat_id, )).fetchone()[0]
+                print(nick)
+                if nick != "User Unknown":
+                    info.people.append(nick)
+                
+                answer = "Добро пожаловать. Снова."
+
+        elif '/leave' in msg_txt:
+            if not flags['presence']:
+                answer = "Но ты же еще не приехал...("
+            else:
+                info.count_of_people -= 1
+                info.last_update = datetime.datetime.utcnow() + datetime.timedelta(hours=3)
+                flags['presence'] = False
+                cursor.execute('''UPDATE users SET flags=? WHERE chat_id=?''', (json.dumps(flags),chat_id,))
+                nick = cursor.execute('''SELECT nickname FROM users WHERE chat_id=?''', (chat_id, )).fetchone()[0]
+                print(nick)
+                if nick != "User Unknown":
+                    info.people.remove(nick)
+
+                answer = "Будем ждать тебя!"
 
         else:
             answer = random.choice(excuses)
