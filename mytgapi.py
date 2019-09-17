@@ -48,7 +48,7 @@ def help_message():
     string = "Uzka Queue Bot v1.0\nИзвините, я упячко (I will fix it, probably)\n\n"+\
     "/help - вывести список команд;\n" +\
     "/info - узнать количество человек на южке\n\n" +\
-    "__/nick - задать себе имя\n\n" +\
+    "/nick - задать себе имя\n\n" +\
     "/setcount - задать количество человек на локации\n"+\
     "__/come - приехать на южку;\n" +\
     "__/leave - уехать с южки;\n"
@@ -60,10 +60,10 @@ def info_message(info):
     return string
 
 def info_message_time(info):
-    delt = datetime.datetime.utcnow() - info.last_update
+    delt = datetime.datetime.utcnow() - info.last_update + datetime.timedelta(hours=3)
     if delt.seconds/3600 <9:
-        return "Последне обновление: " + info.last_update..strftime("%H:%M")
-    else
+        return "Последне обновление: " + info.last_update.strftime("%H:%M")
+    else:
         return None
 
 
@@ -89,7 +89,6 @@ def handleMessage(message, info, cursor):
     if flags:
         flags = json.loads(flags[0])
 
-    print("FLAGS:")
     print(flags)
 
     if '/start' in msg_txt:
@@ -102,10 +101,11 @@ def handleMessage(message, info, cursor):
 
     #time = datetime.datetime.utcnow()
 
-elif datetime.datetime.utcnow().hour < 7 or datetime.datetime.utcnow().hour > 9:
+    elif datetime.datetime.utcnow().hour < 7 or datetime.datetime.utcnow().hour > 21:
         info.count_of_people = 0
         answer = "Южка спит и детки спят\nЗавтра пампить захотят."
     else:
+        print("FIRST CHECK")
         if '/info' in msg_txt:
             answer = info_message(info)
             answer += "\n" + info_message_time(info)
@@ -115,6 +115,8 @@ elif datetime.datetime.utcnow().hour < 7 or datetime.datetime.utcnow().hour > 9:
                 flags['setcount'] = True
                 cursor.execute('''UPDATE users SET flags=? WHERE chat_id=?''', (json.dumps(flags),chat_id,))
                 answer = "Напишите, сколько людей сейчас на локации:"
+            else:
+                answer = "Напишите, сколько людей сейчас на локации:"
 
         elif flags['setcount']:
             flags['setcount'] = False
@@ -123,6 +125,7 @@ elif datetime.datetime.utcnow().hour < 7 or datetime.datetime.utcnow().hour > 9:
                 num = int(msg_txt.strip())
                 if 0 <= num <= 25:
                     info.count_of_people = num
+                    info.last_update = datetime.datetime.utcnow() + datetime.timedelta(hours=3)
                     answer = info_message(info)
                 else:
                     answer = "Я программист, меня не обманешь..."
@@ -134,13 +137,17 @@ elif datetime.datetime.utcnow().hour < 7 or datetime.datetime.utcnow().hour > 9:
                 flags['nickname'] = True
                 cursor.execute('''UPDATE users SET flags=? WHERE chat_id=?''', (json.dumps(flags),chat_id,))
                 answer = "Напишите ваш новый ник:"
+            else:
+                answer = "Этот кусок кода заставил меня залипнуть минут на 10\nНапишите ваш новый ник:"
 
         elif flags['nickname']:
             flags['nickname'] = False
             cursor.execute('''UPDATE users SET flags=? WHERE chat_id=?''', (json.dumps(flags),chat_id,))
+            print("CHECK TWO")
             nick = msg_txt.strip()
-            if nick(len) <= 10:
-                cursor.execute('''UPDATE users SET nickname=? WHERE chat_id=?''', (ncik,chat_id,))
+            if len(nick) <= 10 and nick[0] != '/':
+                print("GOOD NICK BLOCK~~~~")
+                cursor.execute('''UPDATE users SET nickname=? WHERE chat_id=?''', (nick, chat_id,))
                 answer = "Приветствую, " + nick + "!"
             else:
                 answer = "Слишком большой! (макс. 10 символов)"
