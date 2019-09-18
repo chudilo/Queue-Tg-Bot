@@ -45,7 +45,7 @@ def getMe():
 
 
 def help_message():
-    string = "Uzka Queue Bot v1.0\nИзвините, я упячко (I will fix it, probably)\n\n"+\
+    string = "Uzka Queue Bot v1.1\nИзвините, я упячко (I will fix it, probably)\n\n"+\
     "/help - вывести список команд;\n" +\
     "/info - узнать количество человек на южке\n\n" +\
     "/nick - задать себе имя\n\n" +\
@@ -65,10 +65,13 @@ def info_message(info):
     return string
 
 def info_message_time(info):
-    delt = datetime.datetime.utcnow() - info.last_update + datetime.timedelta(hours=3)
-    if delt.seconds/3600 <9:
+    delt = datetime.datetime.utcnow() + datetime.timedelta(hours=3) - info.last_update
+    print(delt, delt.seconds/3600, delt.days)
+    #print(delt.seconds, delt.days)
+    if delt.seconds/3600 < 9 and not delt.days:
         return "Последне обновление: " + info.last_update.strftime("%H:%M")
     else:
+        print("OhWow")
         return None
 
 
@@ -113,7 +116,18 @@ def handleMessage(message, info, cursor):
         print("FIRST CHECK")
         if '/info' in msg_txt:
             answer = info_message(info)
-            answer += "\n" + info_message_time(info)
+            add = info_message_time(info)
+            if add != None:
+                answer += "\n" + info_message_time(info)
+            else:
+                answer += "\nДавно-давно..."
+                info.count_of_people = 0
+                info.people = []
+                persons_flag = cursor.execute('''SELECT chat_id, flags FROM users''')
+                for person in persons_flag:
+                    new_flags = json.loads(person[1])
+                    new_flags['persence'] = False
+                    cursor.execute('''UPDATE users SET flags=? WHERE chat_id=?''', (json.dumps(new_flags), person[0]))
 
         elif '/setcount' in msg_txt:
             if not flags['setcount']:
