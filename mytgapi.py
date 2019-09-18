@@ -60,7 +60,7 @@ def isUpdateOld(info):
     upd = info.last_update
     old = None
     if new.day != upd.day:
-        if now.hour > 1:
+        if new.hour > 1:
             old = True
         else:
             if (new-upd).days == 0 and upd.hour > 1:
@@ -95,6 +95,10 @@ def info_message(info):
         for person in info.people:
             string += person + "; "
         string += str(info.count_of_people - len(info.people)) + " рандома"
+    
+    if not isUpdateOld:
+        string += "\n" + info_message_time(info)
+
     return string
 
 
@@ -138,6 +142,12 @@ def handleMessage(message, info, cursor):
     if isUpdateOld(info):
         info = resetNight(info, cursor)
 
+    person = cursor.execute('''SELECT flags FROM users WHERE chat_id=?''', (chat_id, ))
+    flags = cursor.fetchone()
+    if flags:
+        flags = json.loads(flags[0])
+
+ 
     if '/start' in msg_txt:
         if not flags:
             startHandler(message, cursor)
@@ -154,7 +164,7 @@ def handleMessage(message, info, cursor):
     else:
         print("FIRST CHECK")
         if '/info' in msg_txt:
-            answer, info = info_message(info)
+            answer = info_message(info)
 
         elif '/setcount' in msg_txt:
             if not flags['setcount']:
@@ -175,7 +185,7 @@ def handleMessage(message, info, cursor):
                     else:
                         info.count_of_people = num
                         info.last_update = datetime.datetime.utcnow() + datetime.timedelta(hours=3)
-                        answer, info = info_message(info)
+                        answer = info_message(info)
                 else:
                     answer = "Я программист, меня не обманешь..."
             else:
