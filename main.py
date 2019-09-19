@@ -54,6 +54,21 @@ def main():
         db.commit()
     except Exception as e:
         logging.exception(e)
+
+    db_log = sqlite3.connect('data/log.db')
+    cursor_log = db_log.cursor()
+
+    try:
+        cursor_log.execute('''CREATE TABLE log(id INTEGER PRIMARY KEY, chat_id TEXT,
+             username TEXT, text TEXT, time TEXT) ''')
+        db_log.commit()
+    except Exception as e:
+        logging.exception(e)
+
+
+
+
+
     #logging.warning("This is warning test log")
     info = None #has count_of_people, people and update_id fields
     try:
@@ -72,6 +87,12 @@ def main():
             if messages['result']:
                 for message in messages['result']:
                     try:
+                        cursor_log.execute('''INSERT INTO log
+     (chat_id, username, text, time) VALUES(?,?,?,?)''',
+     (message['message']['chat']['id'], message['message']['chat']['username'], 
+       message['message']['text'], message['message']['date']))
+                        db_log.commit()
+
                         print(message['message']['text'])
                         response, new_info = handleMessage(message, info, cursor)
                         info = new_info
