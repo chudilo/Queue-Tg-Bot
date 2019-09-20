@@ -5,121 +5,104 @@ import logging
 import sqlite3
 import datetime
 
-from mytgapi import getMe, getUpdates, sendMessage, handleMessage
+from mytgapi import getMe, getUpdates, sendMessage, handleMessage, Info
 
 
-class Info(object):
-    def __init__(self, filename):
-        with open(filename, 'r') as f:
-            info = json.load(f)
-            self.count_of_people = int(info['count_of_people'])
-            self.people = info['people']
-            self.update_id = int(info['update_id'])
-            self.last_update = datetime.datetime.strptime(info['last_update'], "%Y-%m-%d %H:%M:%S.%f")
-
-    def save(self, filename):
-        with open(filename, 'w') as f:
-            info = {'count_of_people' : self.count_of_people,
-                'people' : self.people,
-                'update_id': self.update_id,
-                'last_update': str(self.last_update)}
-            json.dump(info, f, indent=4)
-
-
-def log(err_msg, tg_info):
-    logging.warning('chat_id:' + str(tg_info['chat_id']) + '; text: ' +
-str(tg_info['text']) + '\n' + err_msg)
-
-LOGNAME = 'logging.log'
-INFONAME = 'info.conf'
-
-format = """
-----------------------------------------------
-%(asctime)s ~~~
-%(message)s """
-logging.basicConfig(format=format, datefmt='%m/%d/%Y %I:%M:%S %p', filename=LOGNAME,level=logging.WARNING)
-
-
-
-
-def main():
+def connectDB():
     db = sqlite3.connect('data/UserDB')
-
-    cursor = db.cursor()
     try:
-        cursor.execute('''
-            CREATE TABLE users(id INTEGER PRIMARY KEY, nickname TEXT,
-                               chat_id TEXT, flags TEXT)
-        ''')
+        db.cursor().execute('''CREATE TABLE users(id INTEGER PRIMARY KEY,
+                            nickname TEXT, chat_id TEXT, flags TEXT)
+                            ''')
         db.commit()
     except Exception as e:
         logging.exception(e)
 
+    return db
+
+
+def connectLogDB():
     db_log = sqlite3.connect('data/log.db')
-    cursor_log = db_log.cursor()
 
     try:
-        cursor_log.execute('''CREATE TABLE log(id INTEGER PRIMARY KEY, chat_id TEXT,
-             username TEXT, text TEXT, time TEXT) ''')
+        db_log.cursor().execute('''CREATE TABLE log(id INTEGER PRIMARY KEY,
+                           chat_id TEXT, username TEXT, text TEXT, time TEXT)
+                           ''')
         db_log.commit()
     except Exception as e:
         logging.exception(e)
 
+    return db_log
 
 
+def logMessageDB(database, message, text=None):
+    if text:
+        database.cursor().execute('''INSERT INTO log
+        (chat_id, username, text, time) VALUES(?,?,?,?)''',
+                        (message['message']['chat']['id'],
+                         "TgBot",
+                         text,
+                         message['message']['date'])
+                         )
+
+    else:
+        database.cursor().execute('''INSERT INTO log
+        (chat_id, username, text, time) VALUES(?,?,?,?)''',
+                        (message['message']['chat']['id'],
+                         message['message']['chat']['username'],
+                         message['message']['text'],
+                         message['message']['date'])
+                         )
+    database.commit()
+
+LOG_EXCEPTIONS = 'logging.log'
+format = """
+----------------------------------------------
+%(asctime)s ~~~
+%(message)s"""
+logging.basicConfig(format=format, datefmt='%m/%d/%Y %I:%M:%S %p', filename=LOG_EXCEPTIONS,level=logging.WARNING)
+
+INFONAME = 'info.conf'
 
 
-    #logging.warning("This is warning test log")
-    info = None #has count_of_people, people and update_id fields
+def main():
+    db = connectDB()
+    db_log = connectLogDB()
+
+    info = None
     try:
         info = Info(INFONAME)
     except Exception as e:
-        #logging.warning("INFO OPEN BLOCK\n" + str(e.__class__) + '\n' + str(e))
         logging.exception(e)
         exit()
 
     while True:
         try:
-            messages = getUpdates(info.update_id)
-            #print(messages)
-            #messages = {}
-            #messages['result'] = [{"message": {'text': input(), 'chat': {'id': 100500}}}]
+            #messages = getUpdates(info.update_id)
+            messages = {'result':  [{"message": {'date': "1377", 'text': input(), 'chat': {'id': 100500, 'username': "LOCALTEST"}}}]}
             if messages['result']:
                 for message in messages['result']:
                     try:
-                        cursor_log.execute('''INSERT INTO log
-     (chat_id, username, text, time) VALUES(?,?,?,?)''',
-     (message['message']['chat']['id'], message['message']['chat']['username'], 
-       message['message']['text'], message['message']['date']))
-                        db_log.commit()
+                        #print(message['message']['text'])
+                        logMessageDB(db_log, message)
+                        response, new_info = handleMessage(message, info, db)
 
-                        print(message['message']['text'])
-                        response, new_info = handleMessage(message, info, cursor)
+                        #print(response['text'])
+                        logMessageDB(db_log, message, text=response['text'])
+                        sendMessage(response['chat_id'], response['text'])
+
                         info = new_info
-                        db.commit()
-                        try:
-                            print(response['text'])
-                            sendMessage(response['chat_id'], response['text'])
-                        except Exception as e:
-                            logging.exception("ANSWERING BLOCK\n" + str(e.__class__) + '\n' + e)
-
                     except Exception as e:
-                        #log("RESPONSE FORM BLOCK\n" + str(e.__class__) + '\n' + str(e), {'chat_id': message['message']['chat']['id'], 'text': message['message']['text']})
                         logging.exception(e)
-                        #info.update_id += 1
+
                     finally:
                         info.update_id += 1
-                        print("Update_id" + str(info.update_id))
                         info.save(INFONAME)
 
-
         except Exception as e:
-            #logging.warning("REQUEST BLOCK\n" + str(e.__class__) + '\n' + e)
             logging.exception(e)
-
         time.sleep(2)
 
 
 if __name__ == '__main__':
-    #print(getMe())
     main()
