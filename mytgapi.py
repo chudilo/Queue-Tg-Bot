@@ -51,9 +51,23 @@ def getUpdates(update_id=1):
     return r.json()
 
 
-def sendMessage(chat_id, text="Test message"):
+def sendMessage(chat_id, text="Test message", numbers=False):
     url = URL + '/sendMessage'
-    r = requests.post(url, json={'chat_id': chat_id, 'text': text })
+    r = None
+    if not numbers:
+        r = requests.post(url, json={'chat_id': chat_id, 'text': text,
+            'reply_markup':{"resize_keyboard": true, "keyboard":
+                [[{"text": "/help"}, {"text": "/nick"}, {"text": "/info"}],
+                [{"text": "/come"}, {"text": "/leave"}],
+                [{"text": "/setcount"}]]} })
+    else:
+        r = requests.post(url, json={'chat_id': chat_id, 'text': text,
+            'reply_markup':{"resize_keyboard": true, "keyboard":
+                [[{"text": "1"}, {"text": "2"}, {"text": "3"}],
+                [{"text": "4"}, {"text": "5"}, {"text": "6"}],
+                [{"text": "7"}, {"text": "8"}, {"text": "9"}],
+                [{"text": "0"}]]}
+
     return r.json()
 
 
@@ -64,7 +78,7 @@ def getMe():
 
 
 def help_message():
-    string = """Uzka Queue Bot v1.1.2\nИзвините, я упячко (I will fix it, probably)
+    string = """Uzka Queue Bot v1.1.4\nИзвините, я упячко (I will fix it, probably)
     /help - вывести список команд
     /info - узнать количество человек на южке
     /nick - задать себе имя
@@ -199,7 +213,7 @@ VALUES(?,?,?)''', ('User Unknown', message['message']['chat']['id'], json.dumps(
 
 def handleMessage(message, info, db):
     cursor = db.cursor()
-
+    num = False
     msg_txt = message['message']['text']
     chat_id = message['message']['chat']['id']
     answer = random.choice(excuses)
@@ -243,6 +257,7 @@ def handleMessage(message, info, db):
 
         elif '/setcount' in msg_txt:
             if not flags['setcount']:
+                num = True
                 flags['setcount'] = True
                 cursor.execute('''UPDATE users SET flags=? WHERE chat_id=?''', (json.dumps(flags),chat_id,))
                 answer = "Напишите, сколько людей сейчас на локации:"
@@ -341,4 +356,4 @@ def handleMessage(message, info, db):
             pass
     '''
     db.commit()
-    return {'chat_id': chat_id, 'text': answer},  info
+    return {'chat_id': chat_id, 'text': answer},  info, num

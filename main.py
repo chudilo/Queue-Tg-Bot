@@ -85,11 +85,11 @@ def main():
                     try:
                         #print(message['message']['text'])
                         logMessageDB(db_log, message)
-                        response, new_info = handleMessage(message, info, db)
+                        response, new_info, num = handleMessage(message, info, db)
 
-                        #print(response['text'])
-                        logMessageDB(db_log, message, text=response['text'])
-                        sendMessage(response['chat_id'], response['text'])
+                        print(response['text'])
+                        logMessageDB(db_log, message, text=response['text'], num)
+                        #sendMessage(response['chat_id'], response['text'])
 
                         info = new_info
                     except Exception as e:
