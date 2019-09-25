@@ -55,19 +55,21 @@ def sendMessage(chat_id, text="Test message", numbers=False):
     url = URL + '/sendMessage'
     r = None
     if not numbers:
+        print("commands keyboard")
         r = requests.post(url, json={'chat_id': chat_id, 'text': text,
-            'reply_markup':{"resize_keyboard": true, "keyboard":
+            'reply_markup':{"resize_keyboard": True, "keyboard":
                 [[{"text": "/help"}, {"text": "/nick"}, {"text": "/info"}],
                 [{"text": "/come"}, {"text": "/leave"}],
-                [{"text": "/setcount"}]]} })
+                [{"text": "/setcount"}]]}})
     else:
+        print("number keyboard")
         r = requests.post(url, json={'chat_id': chat_id, 'text': text,
-            'reply_markup':{"resize_keyboard": true, "keyboard":
+            'reply_markup':{"resize_keyboard": True, "keyboard":
                 [[{"text": "1"}, {"text": "2"}, {"text": "3"}],
                 [{"text": "4"}, {"text": "5"}, {"text": "6"}],
                 [{"text": "7"}, {"text": "8"}, {"text": "9"}],
-                [{"text": "0"}]]}
-
+                [{"text": "0"}]]}})
+    print(r.text)
     return r.json()
 
 
@@ -219,11 +221,15 @@ VALUES(?,?,?)''', ('User Unknown', message['message']['chat']['id'], json.dumps(
 
 def handleMessage(message, info, db):
     cursor = db.cursor()
-    num = False
+
     msg_txt = message['message']['text']
     chat_id = message['message']['chat']['id']
     answer = random.choice(excuses)
 
+    num_keyboard = False
+    if "/setcount" in msg_txt:
+        num_keyboard = True
+    print(msg_txt, num_keyboard)
     #person = cursor.execute('''SELECT flags FROM users WHERE chat_id=?''', (chat_id, ))
     #flags = cursor.fetchone()
     #if flags:
@@ -263,7 +269,6 @@ def handleMessage(message, info, db):
 
         elif '/setcount' in msg_txt:
             if not flags['setcount']:
-                num = True
                 flags['setcount'] = True
                 cursor.execute('''UPDATE users SET flags=? WHERE chat_id=?''', (json.dumps(flags),chat_id,))
                 answer = "Напишите, сколько людей сейчас на локации:"
@@ -364,4 +369,4 @@ def handleMessage(message, info, db):
             pass
     '''
     db.commit()
-    return {'chat_id': chat_id, 'text': answer},  info, num
+    return {'chat_id': chat_id, 'text': answer},  info, num_keyboard

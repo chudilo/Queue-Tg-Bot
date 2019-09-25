@@ -82,7 +82,8 @@ def main():
     while True:
         try:
             messages = getUpdates(info.update_id)
-            print(messages['result'])
+            print(messages)
+            #print(messages['result'])
             #messages = {'result':  [{"message": {'date': "1377", 'text': input(), 'chat': {'id': 100500, 'username': "LOCALTEST"}}}]}
             if messages['result']:
                 for message in messages['result']:
@@ -90,10 +91,11 @@ def main():
                         #print(message['message']['text'])
                         logMessageDB(db_log, message)
                         response, new_info, num = handleMessage(message, info, db)
-
+                       
+                        print(num)
                         print(response['text'])
-                        logMessageDB(db_log, message, text=response['text'], num)
-                        #sendMessage(response['chat_id'], response['text'])
+                        logMessageDB(db_log, message, text=response['text'])
+                        sendMessage(response['chat_id'], response['text'], num)
 
                         info = new_info
                     except Exception as e:
