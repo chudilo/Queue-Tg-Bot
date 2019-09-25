@@ -36,6 +36,9 @@ def connectLogDB():
 
 
 def logMessageDB(database, message, text=None):
+    if not "username" in message['message']['chat'].keys():
+        message['message']['chat']['username'] = "Not Define"
+
     if text:
         database.cursor().execute('''INSERT INTO log
         (chat_id, username, text, time) VALUES(?,?,?,?)''',
@@ -78,8 +81,9 @@ def main():
 
     while True:
         try:
-            #messages = getUpdates(info.update_id)
-            messages = {'result':  [{"message": {'date': "1377", 'text': input(), 'chat': {'id': 100500, 'username': "LOCALTEST"}}}]}
+            messages = getUpdates(info.update_id)
+            print(messages['result'])
+            #messages = {'result':  [{"message": {'date': "1377", 'text': input(), 'chat': {'id': 100500, 'username': "LOCALTEST"}}}]}
             if messages['result']:
                 for message in messages['result']:
                     try:

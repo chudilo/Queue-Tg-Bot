@@ -64,7 +64,7 @@ def getMe():
 
 
 def help_message():
-    string = """Uzka Queue Bot v1.1.2\nИзвините, я упячко (I will fix it, probably)
+    string = """Uzka Queue Bot v1.1.3\nИзвините, я упячко (I will fix it, probably)
     /help - вывести список команд
     /info - узнать количество человек на южке
     /nick - задать себе имя
@@ -72,7 +72,7 @@ def help_message():
     /come - приехать на южку
     /leave - уехать с южки
 
-    По всем вопросам неопределенного поведения писать @chudikchudik"""
+По всем вопросам неопределенного поведения писать @chudikchudik"""
     return string
 
 def isNickInDB(new_nick, db):
@@ -104,14 +104,15 @@ def isUpdateOld(info):
     return old
 
 
-def resetNight(info, cursor):
+def resetNight(info, db):
     info.count_of_people = 0
     info.people = []
-    persons_flag = cursor.execute('''SELECT chat_id, flags FROM users''')
+    persons_flag = db.cursor().execute('''SELECT chat_id, flags FROM users''')
     for person in persons_flag:
         new_flags = json.loads(person[1])
         new_flags['presence'] = False
-        cursor.execute('''UPDATE users SET flags=? WHERE chat_id=?''', (json.dumps(new_flags), person[0]))
+        db.cursor().execute('''UPDATE users SET flags=? WHERE chat_id=?''', (json.dumps(new_flags), person[0]))
+    db.commit()
 
     return info
 
@@ -121,11 +122,16 @@ def list_of_people(info, db):
     str_lst = ""
     count = int(info.count_of_people)
     for person in people:
-        if person[0] != "Unknown User" and json.loads(person[1])['presence']:
+        if person[0] != "User Unknown" and json.loads(person[1])['presence']:
             str_lst += str(person[0]) + "; "
             count -= 1
+    if count not in (0, 1, 2, 3, 4, 21):
+        str_lst += str(count) + " рандомов."
+    elif count in (1, 21):
+        str_lst += str(count) + " рандом."
+    elif count in (2, 3, 4):
+        str_lst += str(count) + " рандома."
 
-    str_lst += str(count) + " рандомов."
     return str_lst
 
 #with nicks
@@ -143,7 +149,7 @@ def update_time(info):
     if isUpdateOld(info):
         return ""
     else:
-        return "\nПоследне обновление: " + info.last_update.strftime("%H:%M")
+        return "\nПоследнее обновление: " + info.last_update.strftime("%H:%M")
 
 
 def info_message(info, db):
@@ -213,7 +219,7 @@ def handleMessage(message, info, db):
 
     #print("before reset")
     if isUpdateOld(info):
-        info = resetNight(info, cursor)
+        info = resetNight(info, db)
 
     #print("After reset")
     person = cursor.execute('''SELECT flags FROM users WHERE chat_id=?''', (chat_id, ))
@@ -308,6 +314,7 @@ def handleMessage(message, info, db):
                     answer = "Добро пожаловать. Снова."
                 else:
                     answer = "Добро пожаловать, " + str(nick) + ". Снова."
+                answer += "\n\n" + info_message(info,db)
 
         elif '/leave' in msg_txt:
             if not flags['presence']:
@@ -327,6 +334,7 @@ def handleMessage(message, info, db):
                         logging(e)
                 '''
                 answer = "Будем ждать тебя!"
+                answer += "\n\n" + info_message(info, db)
 
         else:
             answer = random.choice(excuses)
