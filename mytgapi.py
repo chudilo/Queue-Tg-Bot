@@ -73,6 +73,22 @@ def sendMessage(chat_id, text="Test message", numbers=False):
     return r.json()
 
 
+'''
+stickers = {"cat": "CAADAgADoQADI1wKCH6LJUoDyMPdFgQ",
+            "cat_with_bear": "CAADAgADZAADOZGnGInXh4u1JOWQFgQ",
+           }
+'''
+stickers = ("CAADAgADoQADI1wKCH6LJUoDyMPdFgQ", #cat
+            "CAADAgADZAADOZGnGInXh4u1JOWQFgQ", #cat_with_bear
+           )
+def sendSticker(chat_id, sticker="Test message",):
+    url = URL + '/sendSticker'
+    r = requests.post(url, json = {'chat_id': chat_id,
+                                   'sticker': stickers[random.randrange(2)]}
+                     )
+    return r.json()
+
+
 def getMe():
     url = URL + '/getMe'
     r = requests.get(url)

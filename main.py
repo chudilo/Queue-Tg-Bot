@@ -5,7 +5,7 @@ import logging
 import sqlite3
 import datetime
 
-from mytgapi import getMe, getUpdates, sendMessage, handleMessage, Info
+from mytgapi import getMe, getUpdates, sendMessage, handleMessage, Info, sendSticker
 
 
 def connectDB():
@@ -91,11 +91,13 @@ def main():
                         #print(message['message']['text'])
                         logMessageDB(db_log, message)
                         response, new_info, num = handleMessage(message, info, db)
-                       
+
                         print(num)
                         print(response['text'])
                         logMessageDB(db_log, message, text=response['text'])
                         sendMessage(response['chat_id'], response['text'], num)
+                        if random.random() < 1/200:
+                            sendSticker(response['chat_id'])
 
                         info = new_info
                     except Exception as e:
