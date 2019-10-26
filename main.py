@@ -4,6 +4,7 @@ import time
 import logging
 import sqlite3
 import datetime
+import random
 
 from mytgapi import getMe, getUpdates, sendMessage, handleMessage, Info, sendSticker
 
@@ -96,7 +97,7 @@ def main():
                         print(response['text'])
                         logMessageDB(db_log, message, text=response['text'])
                         sendMessage(response['chat_id'], response['text'], num)
-                        if random.random() < 1/200:
+                        if random.random() < 1/100:
                             sendSticker(response['chat_id'])
 
                         info = new_info

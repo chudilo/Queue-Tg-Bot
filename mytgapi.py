@@ -81,11 +81,23 @@ stickers = {"cat": "CAADAgADoQADI1wKCH6LJUoDyMPdFgQ",
 stickers = ("CAADAgADoQADI1wKCH6LJUoDyMPdFgQ", #cat
             "CAADAgADZAADOZGnGInXh4u1JOWQFgQ", #cat_with_bear
            )
+
+botStickers =  ("CAADAgADAQADTpCiDaNuAUvXQvO8FgQ",)
+                 #CAADAgADAQADTpCiDaNuAUvXQvO8FgQ
+
+
 def sendSticker(chat_id, sticker="Test message",):
     url = URL + '/sendSticker'
     r = requests.post(url, json = {'chat_id': chat_id,
                                    'sticker': stickers[random.randrange(2)]}
                      )
+
+    if random.random() < 1/10:
+        print("THIS BLOCK")
+        r = requests.post(url, json = {'chat_id': chat_id,
+                                       'sticker': botStickers[0]}
+                    )
+    print(r.json())
     return r.json()
 
 
@@ -96,7 +108,7 @@ def getMe():
 
 
 def help_message():
-    string = """Uzka Queue Bot v1.1.4\nИзвините, я упячко (I will fix it, probably)
+    string = """Uzka Queue Bot v1.1.5\nИзвините, я упячко (I will fix it, probably)
     /help - вывести список команд
     /info - узнать количество человек на южке
     /nick - задать себе имя
@@ -177,6 +189,15 @@ def num_of_people(info, db):
     return count
 
 
+def askForLeave(chat_id, info, db):
+    people = db.cursor().execute('''SELECT chat_id, flags FROM users''').fetchall()
+    for person in people:
+        if str(chat_id) != str(person[0]) and json.loads(person[1])['presence']:
+            sendMessage(int(person[0]), text="А ты точно ещё играешь?")
+            logging.debug(str(person[0]) + "А ты точно ещё играешь?")
+            print('HERE ASK ' + str(chat_id))
+ 
+
 def update_time(info):
     if isUpdateOld(info):
         return ""
@@ -224,7 +245,7 @@ def info_message_time(info):
     '''
 
 def startHandler(message, cursor):
-    flags = {"presence": False, "setcount": False, "nickname": False }
+    flags = {"presence": False, "setcount": False, "nickname": False, "popped": False, "shadow": False}
     try:
         cursor.execute('''INSERT INTO users(nickname, chat_id, flags)
 VALUES(?,?,?)''', ('User Unknown', message['message']['chat']['id'], json.dumps(flags)))
@@ -298,7 +319,9 @@ def handleMessage(message, info, db):
                 num = int(msg_txt.strip())
                 if 0 <= num <= 25:
                     if num < num_of_people(info, db):
-                        answer = "Я чувствую подвох. Уровень искуственного интеллекта на земле еще не настолько развит, чтобы понять, сколько людей сейчас на южке"
+                        askForLeave(chat_id, info, db)
+                        answer = "Кабанчик метнулся разобраться"
+                        #answer = "Я чувствую подвох. Уровень искуственного интеллекта на земле еще не настолько развит, чтобы понять, сколько людей сейчас на южке"
                     else:
                         info.count_of_people = num
                         info.last_update = datetime.datetime.utcnow() + datetime.timedelta(hours=3)
