@@ -6,11 +6,12 @@ import requests
 
 
 class TgBot(object):
-    def __init__(self, token, commands):
+    def __init__(self, token, handleMessage):
         self.token = token
         self.requestUrl = 'https://api.telegram.org/bot' + token
-        self.commands = commands
         self.offset = 0
+
+        self.handleMessage = handleMessage
 
     def getMe(self):
         r = requests.get(self.requestUrl + '/getMe')
@@ -18,19 +19,29 @@ class TgBot(object):
 
     def getUpdates(self, timeout=0):
         print("offset:", self.offset)
-        r = requests.post(self.requestUrl + '/getUpdates', json={'offset': self.offset,
-                                                                'timeout': timeout})
+        r = requests.post(self.requestUrl + '/getUpdates',
+                          json={'offset': self.offset,
+                                'timeout': timeout})
         return r.json()
 
     def sendMessage(self, chat_id, text, reply_markup=None):
-        pass
+        reply_markup = {"resize_keyboard": True,
+                        "keyboard": [
+                            [{"text": "/help"}, {"text": "/nick"}, {"text": "/info"}],
+                            [{"text": "/come"}, {"text": "/leave"}],
+                            [{"text": "/setcount"}]]}
 
-    def sendSticker(self):
-        pass
+        r = requests.post(self.requestUrl+'/sendMessage',
+                          json={'chat_id': chat_id,
+                                'text': text,
+                                'reply_markup': {}})
+        return r.json()
 
-    def handleMessage(self, message):
-        self.offset = message['update_id'] + 1
-        print("message", message)
+    def sendSticker(self, chat_id, sticker):
+        r = requests.post(self.requestUrl + '/sendSticker',
+                          json={'chat_id': chat_id,
+                                'sticker': sticker})
+        return r.json()
 
     # TODO: Make web hook bot
     def startWebHook(self):
@@ -50,9 +61,10 @@ class TgBot(object):
     def startGetUpdate(self):
         while True:
             update = self.getUpdates(timeout=30)
-            for message in update['result']:
-                self.handleMessage(message)
-
+            print("update", update)
+            if update['ok']:
+                for message in update['result']:
+                    self.handleMessage(message)
 
     def run(self, webHook=False):
         if webHook:
