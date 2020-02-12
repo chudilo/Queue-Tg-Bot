@@ -12,7 +12,6 @@ class DataBase(object):
 
     def getLastId(self):
         cur = self.connection.cursor()
-
         cur.execute('''SELECT MAX(id) FROM Users;''')
         rows = cur.fetchone()
 
@@ -20,6 +19,16 @@ class DataBase(object):
             return 0
         else:
             return rows[0]
+
+    def getQueue(self):
+        cur = self.connection.cursor()
+        cur.execute('''SELECT username FROM users CROSS JOIN FLAGS WHERE presence = true''')
+        rows = cur.fetchall()
+
+        if rows is None:
+            return 0
+        else:
+            return rows
 
     def initTables(self):
         cur = self.connection.cursor()
@@ -57,7 +66,7 @@ class DataBase(object):
         new_index = self.getLastId() + 1
 
         cur.execute('''INSERT INTO Users (id, chat_id, username) VALUES (%s, %s, %s);''',
-                    (new_index, chat_id, username))
+                    (new_index, chat_id, username + str(new_index)))
 
         cur.execute('''INSERT INTO Flags(id) VALUES(%s);''', (new_index,))
 
@@ -65,9 +74,28 @@ class DataBase(object):
 
     def writeMessage(self, user_id, tg_name, tg_id, content):
         cur = self.connection.cursor()
-
         cur.execute('''INSERT INTO Messages (user_id, tg_name, tg_id, content) VALUES (%s, %s, %s, %s);''',
                     (user_id, tg_name, tg_id, content,))
+
+        self.connection.commit()
+
+    def setUserFlag(self, user_id, flag):
+        cur = self.connection.cursor()
+        query = '''UPDATE flags SET presence = true 
+                   WHERE id = (SELECT id FROM users WHERE chat_id = %s);
+                '''.format(flag)
+        
+        cur.execute(query, (user_id, ))
+
+        self.connection.commit()
+
+    def clrUserFlag(self, user_id, flag):
+        cur = self.connection.cursor()
+        query = '''UPDATE flags SET presence = false 
+                   WHERE id = (SELECT id FROM users WHERE chat_id = %s);
+                '''.format(flag)
+
+        cur.execute(query, (user_id, ))
 
         self.connection.commit()
 
