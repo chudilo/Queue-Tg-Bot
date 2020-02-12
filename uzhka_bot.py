@@ -1,5 +1,7 @@
 import os
 from telegram_api import TgBot
+from db_api import DataBase
+
 
 class UzhkaBot(TgBot):
     def __init__(self, token, database):
@@ -7,7 +9,8 @@ class UzhkaBot(TgBot):
                     "/info": self.info,}
 
         super().__init__(token, self.handleMessage)
-        self.database = database
+
+        self.db = DataBase("postgres", "ubuntu")
 
     def handleMessage(self, message):
         try:
@@ -20,12 +23,19 @@ class UzhkaBot(TgBot):
                 r = self.sendMessage(message['message']['chat']['id'],
                                      message['message']['text'])
 
-            print("answer", r)
+            self.db.writeMessage(message['message']['chat']['id'],
+                                 message['message']['chat']['first_name'] + " " + message['message']['chat']['last_name'],
+                                 message['message']['chat']['username'],
+                                 message['message']['text'])
+
+            #print("answer", r)
             print("message", message)
         except Exception as e:
+            # TODO: logging exceptions
             print("exception:", e)
 
     def start(self, message):
+        self.db.createUser(message['message']['chat']['id'], "Радостная собака")
         self.sendMessage(message['message']['chat']['id'], "THIS IS A TRIUMPH")
 
     def info(self, message):
