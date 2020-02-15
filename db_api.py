@@ -22,7 +22,9 @@ class DataBase(object):
 
     def getQueue(self):
         cur = self.connection.cursor()
-        cur.execute('''SELECT username FROM users CROSS JOIN FLAGS WHERE presence = true''')
+        cur.execute('''SELECT username FROM users INNER JOIN flags
+                       ON users.id = flags.id
+                       WHERE presence = true;''')
         rows = cur.fetchall()
 
         if rows is None:
@@ -55,6 +57,15 @@ class DataBase(object):
 
         return cur.fetchone()[0]
 
+    def getNicknames(self):
+        cur = self.connection.cursor()
+        cur.execute('''SELECT username FROM Users;''')
+
+        rows = cur.fetchall()
+
+        print(rows)
+        return [row[0] for row in rows]
+
     def initTables(self):
         cur = self.connection.cursor()
 
@@ -86,6 +97,8 @@ class DataBase(object):
         cur.execute('''CREATE TABLE State
         (count SMALLINT NOT NULL DEFAULT 0 CHECK (count >= 0),
         last_update TIMESTAMP DEFAULT NULL);''')
+
+        cur.execute('''INSERT INTO State Values(DEFAULT);''')
 
         self.connection.commit()
 

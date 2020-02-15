@@ -55,7 +55,7 @@ class UzhkaBot(TgBot):
 
     def handleSplitCommands(self, message):
         chat_id = message['message']['chat']['id']
-        text = message['message']['text']
+        text = message['message']['text'].strip()
 
         if self.db.getFlag(chat_id, "set_count"):
             if text.isdigit():
@@ -66,14 +66,15 @@ class UzhkaBot(TgBot):
                 self.answerToUser(chat_id, "Неверный формат ввода, попробуйте ещё раз")
 
         elif self.db.getFlag(chat_id, "nickname"):
-            if len(text) <= 13:
+            if len(text) > 13:
+                self.answerToUser(chat_id, "Слишком длинный вариант (макс. 13), попродуйте ещё раз")
+                #self.answerToUser(message['message']['chat']['id'], "Добро пожаловать, ")
+            elif text in self.db.getNicknames():
+                self.answerToUser(chat_id, "Такое имя уже используется, попробуйте ещё раз")
+            else:
                 self.db.setNickname(chat_id, text)
                 self.db.clrUserFlag(chat_id, "nickname")
                 self.answerToUser(chat_id, "Добро пожаловать, " + text)
-            else:
-                self.answerToUser(chat_id, "Слишком длинный вариант (макс. 13), попродуйте ещё раз")
-                #self.answerToUser(message['message']['chat']['id'], "Добро пожаловать, ")
-
         else:
             self.answerToUser(message['message']['chat']['id'], message['message']['text'])
 
