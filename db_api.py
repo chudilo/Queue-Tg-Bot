@@ -30,6 +30,31 @@ class DataBase(object):
         else:
             return rows
 
+    def getCount(self):
+        cur = self.connection.cursor()
+        cur.execute('''SELECT count FROM State;''')
+
+        result = cur.fetchone()[0]
+        #print("getCount", result)
+        return result
+
+    def getLastUpdate(self):
+        cur = self.connection.cursor()
+        cur.execute('''SELECT last_update FROM State;''')
+
+        result = cur.fetchone()[0]
+        print("getCount", result)
+        return result
+
+    def getFlag(self, chat_id, flag):
+        cur = self.connection.cursor()
+        query = '''SELECT {} FROM flags
+                   WHERE id = (SELECT id FROM users WHERE chat_id = %s);
+                '''.format(flag)
+        cur.execute(query, (chat_id, ))
+
+        return cur.fetchone()[0]
+
     def initTables(self):
         cur = self.connection.cursor()
 
@@ -58,6 +83,10 @@ class DataBase(object):
         time TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
         ''')
 
+        cur.execute('''CREATE TABLE State
+        (count SMALLINT NOT NULL DEFAULT 0 CHECK (count >= 0),
+        last_update TIMESTAMP DEFAULT NULL);''')
+
         self.connection.commit()
 
     def createUser(self, chat_id, username="Радостный пользователь"):
@@ -79,25 +108,33 @@ class DataBase(object):
 
         self.connection.commit()
 
+    # method returns is flag was changed
     def setUserFlag(self, user_id, flag):
+        result = not self.getFlag(user_id, flag)
+
         cur = self.connection.cursor()
-        query = '''UPDATE flags SET presence = true 
+        query = '''UPDATE flags SET {} = true 
                    WHERE id = (SELECT id FROM users WHERE chat_id = %s);
                 '''.format(flag)
 
         cur.execute(query, (user_id, ))
-
         self.connection.commit()
 
+        return result
+
+    # method returns is flag was changed
     def clrUserFlag(self, user_id, flag):
+        result = self.getFlag(user_id, flag)
+
         cur = self.connection.cursor()
-        query = '''UPDATE flags SET presence = false 
+        query = '''UPDATE flags SET {} = false 
                    WHERE id = (SELECT id FROM users WHERE chat_id = %s);
                 '''.format(flag)
 
         cur.execute(query, (user_id, ))
-
         self.connection.commit()
+
+        return result
 
     def getUser(self, chat_id):
         cur = self.connection.cursor()
@@ -105,8 +142,32 @@ class DataBase(object):
         cur.execute('''SELECT id FROM Users WHERE chat_id=%s;''', (chat_id, ))
 
         val = cur.fetchone()
-        print(val)
         return val
+
+    def setCount(self, count):
+        cur = self.connection.cursor()
+
+        cur.execute('''UPDATE State SET count=%s, last_update = CURRENT_TIMESTAMP ;''', (count, ))
+        self.connection.commit()
+
+    def incCount(self):
+        cur = self.connection.cursor()
+
+        cur.execute('''UPDATE State SET count=count+1, last_update = CURRENT_TIMESTAMP ;''')
+        self.connection.commit()
+
+    def decCount(self):
+        cur = self.connection.cursor()
+
+        cur.execute('''UPDATE State SET count=count-1, last_update = CURRENT_TIMESTAMP ;''')
+        self.connection.commit()
+
+    def setNickname(self, chat_id, new_nickname):
+        cur = self.connection.cursor()
+
+        cur.execute('''UPDATE Users SET username=%s
+                       WHERE chat_id = %s;''', (new_nickname, chat_id, ))
+        self.connection.commit()
 
 
 def main():
