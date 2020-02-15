@@ -182,10 +182,19 @@ class DataBase(object):
                        WHERE chat_id = %s;''', (new_nickname, chat_id, ))
         self.connection.commit()
 
+    def resetNight(self):
+        cur = self.connection.cursor()
+
+        cur.execute('''UPDATE Flags SET presence = false;''')
+        cur.execute('''UPDATE State SET count = 0;''')
+        cur.execute('''UPDATE State SET last_update = NULL''')
+        self.connection.commit()
+
 
 def main():
     db = DataBase("postgres", "ubuntu")
-    db.initTables()
+    #db.initTables()
+    db.resetNight()
 
 
 if __name__ == '__main__':

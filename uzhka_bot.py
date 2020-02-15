@@ -19,6 +19,7 @@ def help_message():
 По всем вопросам неопределенного поведения писать @chudikchudik"""
     return string
 
+closed_message = "Южка спит и детки спят\nЗавтра пампить захотят"
 
 class UzhkaBot(TgBot):
     def __init__(self, token, database):
@@ -32,7 +33,21 @@ class UzhkaBot(TgBot):
 
         super().__init__(token, self.handleMessage)
 
+        self.schedule = {1:(7,21), 2:(7,21), 3:(7,21),
+                         4:(7,21), 5:(7,22), 6:(7,22), 7:(7,21),}
+
         self.db = DataBase("postgres", "ubuntu")
+
+    def isClosed(self):
+        today =  datetime.datetime.now().weekday()
+        time = datetime.datetime.time(datetime.datetime.now())
+
+        print(self.schedule[today][0], time.hour, self.schedule[today][1])
+        if self.schedule[today][0] <= time.hour < self.schedule[today][1]:
+            print("FFFFFFf")
+            return False
+        else:
+            return True
 
     def saveLog(self, message):
         self.db.writeMessage(message['message']['chat']['id'],
@@ -87,24 +102,42 @@ class UzhkaBot(TgBot):
         self.answerToUser(message['message']['chat']['id'], "Введите свой никнейм:")
 
     def info(self, message):
-        self.answerToUser(message['message']['chat']['id'], self.infoMessage())
+        if not self.isClosed():
+            self.answerToUser(message['message']['chat']['id'], self.infoMessage())
+        else:
+            self.answerToUser(message['message']['chat']['id'], closed_message)
 
     def come(self, message):
-        if self.db.setUserFlag(message['message']['chat']['id'], "presence"):
-            self.db.incCount()
-
-        self.answerToUser(message['message']['chat']['id'], "ДАРОВА")
+        if not self.isClosed():
+            if self.db.setUserFlag(message['message']['chat']['id'], "presence"):
+                self.db.incCount()
+                self.answerToUser(message['message']['chat']['id'],
+                                 "Добро пожаловать, снова.\n" + self.infoMessage(check=True))
+            else:
+                self.answerToUser(message['message']['chat']['id'],
+                                  "Я знаю, что ты ещё тут...)")
+        else:
+            self.answerToUser(message['message']['chat']['id'], closed_message)
 
     def leave(self, message):
-        if self.db.clrUserFlag(message['message']['chat']['id'], "presence"):
-            self.db.decCount()
-
-        self.answerToUser(message['message']['chat']['id'], "ПОКЕДА")
+        if not self.isClosed():
+            if self.db.clrUserFlag(message['message']['chat']['id'], "presence"):
+                self.db.decCount()
+                self.answerToUser(message['message']['chat']['id'],
+                                  "Пока-пока!\n" + self.infoMessage(check=True))
+            else:
+                self.answerToUser(message['message']['chat']['id'],
+                                  "Но ты же ещё не приехал...(")
+        else:
+            self.answerToUser(message['message']['chat']['id'], closed_message)
 
     def setCount(self, message):
-        self.db.setUserFlag(message['message']['chat']['id'], "set_count")
-        self.db.clrUserFlag(message['message']['chat']['id'], "nickname")
-        self.answerToUser(message['message']['chat']['id'], "Напишите количество людей:")
+        if not self.isClosed():
+            self.db.setUserFlag(message['message']['chat']['id'], "set_count")
+            self.db.clrUserFlag(message['message']['chat']['id'], "nickname")
+            self.answerToUser(message['message']['chat']['id'], "Напишите количество людей:")
+        else:
+            self.answerToUser(message['message']['chat']['id'], closed_message)
 
     def setNickname(self, message):
         self.db.setUserFlag(message['message']['chat']['id'], "nickname")
@@ -120,15 +153,24 @@ class UzhkaBot(TgBot):
     def createUser(self, chat_id):
         self.db.createUser(chat_id)
 
-    def infoMessage(self):
+    def infoMessage(self, check=False):
         count = self.db.getCount()
         queue = self.db.getQueue()
-        time = self.db.getLastUpdate() + datetime.timedelta(hours=3)
+        time = self.db.getLastUpdate()
 
-        answer = """Количество людей на локации: {}\n{}
-Последнее обновление: {}""".format(count, ", ".join(map(str, [row[0] for row in queue])),
-                                   time.strftime("%H:%M"))
+        answer = "Количество людей на локации: {}".format(count)
+
+        if queue:
+            answer += "\n" + ", ".join(map(str, [row[0] for row in queue]))
+
+        if check:
+            answer += "\n\nНе забудь сверить информацию\n" + "(* ^ ω ^)"
+        elif time:
+            time += datetime.timedelta(hours=3)
+            answer += "\nПоследнее обновление: " + time.strftime("%H:%M")
+
         return answer
+
 
 def main():
     token = os.environ['TEST_TOKEN']
