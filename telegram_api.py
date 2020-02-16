@@ -4,14 +4,6 @@ from flask import request
 import json
 import requests
 
-"""
-        reply_markup = {"resize_keyboard": True,
-                        "keyboard": [
-                            [{"text": "/help"}, {"text": "/nick"}, {"text": "/info"}],
-                            [{"text": "/come"}, {"text": "/leave"}],
-                            [{"text": "/setcount"}]]}
-"""
-
 
 class TgBot(object):
     def __init__(self, token, handleMessage):
@@ -37,6 +29,7 @@ class TgBot(object):
                           json={'chat_id': chat_id,
                                 'text': text,
                                 'reply_markup': reply_markup})
+        print(r.json())
         return r.json()
 
     def sendSticker(self, chat_id, sticker):

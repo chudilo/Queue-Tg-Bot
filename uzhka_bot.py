@@ -6,6 +6,8 @@ import datetime
 
 # self.sendSticker(message['message']['chat']['id'], "CAADAgADAQADTpCiDaNuAUvXQvO8FgQ")
 
+#my_reply_markup = {"inline_keyboard":
+#                       [[{'text': "hello", 'callback_data': (str(datetime.datetime.now().timestamp()) + "  Quser_to_remove")}]]}
 
 def help_message():
     string = """Uzka Queue Bot v1.1.5\nИзвините, я упячко (I will fix it, probably)
@@ -18,6 +20,17 @@ def help_message():
 
 По всем вопросам неопределенного поведения писать @chudikchudik"""
     return string
+
+casual_markup = {"resize_keyboard": True, "keyboard":
+                [[{"text": "/help"}, {"text": "/nick"}, {"text": "/info"}],
+                [{"text": "/come"}, {"text": "/leave"}],
+                [{"text": "/setcount"}]]}
+
+number_markup = {"resize_keyboard": True, "keyboard":
+                [[{"text": "1"}, {"text": "2"}, {"text": "3"}],
+                [{"text": "4"}, {"text": "5"}, {"text": "6"}],
+                [{"text": "7"}, {"text": "8"}, {"text": "9"}],
+                [{"text": "0"}]]}
 
 closed_message = "Южка спит и детки спят\nЗавтра пампить захотят"
 
@@ -74,9 +87,16 @@ class UzhkaBot(TgBot):
 
         if self.db.getFlag(chat_id, "set_count"):
             if text.isdigit():
-                self.db.setCount(int(text))
-                self.db.clrUserFlag(chat_id, "set_count")
-                self.answerToUser(chat_id, self.infoMessage())
+                #print(self.db.getQueue(), int(text))
+                if len(self.db.getQueue()) < int(text) :
+                    self.db.setCount(int(text))
+                    self.db.clrUserFlag(chat_id, "set_count")
+                    self.answerToUser(chat_id, self.infoMessage(), casual_markup)
+                else:
+                    self.db.setCount(len(self.db.getQueue()))
+                    self.db.clrUserFlag(chat_id, "set_count")
+                    self.answerToUser(chat_id, "Последний кораблик уплыл\nПоследний кабанчик устал...", casual_markup)
+                    self.answerToUser(chat_id, self.infoMessage(), casual_markup)
             else:
                 self.answerToUser(chat_id, "Неверный формат ввода, попробуйте ещё раз")
 
@@ -89,60 +109,61 @@ class UzhkaBot(TgBot):
             else:
                 self.db.setNickname(chat_id, text)
                 self.db.clrUserFlag(chat_id, "nickname")
-                self.answerToUser(chat_id, "Добро пожаловать, " + text)
+                self.answerToUser(chat_id, "Добро пожаловать, " + text, casual_markup)
         else:
-            self.answerToUser(message['message']['chat']['id'], message['message']['text'])
+            self.answerToUser(message['message']['chat']['id'], message['message']['text'], casual_markup)
 
     def answerToUser(self, chat_id, text, reply_markup={}):
+        #reply_markup = my_reply_markup
         self.db.writeMessage(chat_id, "PUMP_BOT", None, text)
         self.sendMessage(chat_id, text, reply_markup)
 
     def start(self, message):
         self.answerToUser(message['message']['chat']['id'], help_message())
-        self.answerToUser(message['message']['chat']['id'], "Введите свой никнейм:")
+        self.answerToUser(message['message']['chat']['id'], "Введите свой никнейм:", casual_markup)
 
     def info(self, message):
         if not self.isClosed():
-            self.answerToUser(message['message']['chat']['id'], self.infoMessage())
+            self.answerToUser(message['message']['chat']['id'], self.infoMessage(), casual_markup)
         else:
-            self.answerToUser(message['message']['chat']['id'], closed_message)
+            self.answerToUser(message['message']['chat']['id'], closed_message, casual_markup)
 
     def come(self, message):
         if not self.isClosed():
             if self.db.setUserFlag(message['message']['chat']['id'], "presence"):
                 self.db.incCount()
                 self.answerToUser(message['message']['chat']['id'],
-                                 "Добро пожаловать, снова.\n" + self.infoMessage(check=True))
+                                 "Добро пожаловать, снова.\n" + self.infoMessage(check=True), casual_markup)
             else:
                 self.answerToUser(message['message']['chat']['id'],
-                                  "Я знаю, что ты ещё тут...)")
+                                  "Я знаю, что ты ещё тут...)", casual_markup)
         else:
-            self.answerToUser(message['message']['chat']['id'], closed_message)
+            self.answerToUser(message['message']['chat']['id'], closed_message, casual_markup)
 
     def leave(self, message):
         if not self.isClosed():
             if self.db.clrUserFlag(message['message']['chat']['id'], "presence"):
                 self.db.decCount()
                 self.answerToUser(message['message']['chat']['id'],
-                                  "Пока-пока!\n" + self.infoMessage(check=True))
+                                  "Пока-пока!\n" + self.infoMessage(check=True), casual_markup)
             else:
                 self.answerToUser(message['message']['chat']['id'],
-                                  "Но ты же ещё не приехал...(")
+                                  "Но ты же ещё не приехал...(", casual_markup)
         else:
-            self.answerToUser(message['message']['chat']['id'], closed_message)
+            self.answerToUser(message['message']['chat']['id'], closed_message, casual_markup)
 
     def setCount(self, message):
         if not self.isClosed():
             self.db.setUserFlag(message['message']['chat']['id'], "set_count")
             self.db.clrUserFlag(message['message']['chat']['id'], "nickname")
-            self.answerToUser(message['message']['chat']['id'], "Напишите количество людей:")
+            self.answerToUser(message['message']['chat']['id'], "Напишите количество людей:", number_markup)
         else:
             self.answerToUser(message['message']['chat']['id'], closed_message)
 
     def setNickname(self, message):
         self.db.setUserFlag(message['message']['chat']['id'], "nickname")
         self.db.clrUserFlag(message['message']['chat']['id'], "set_count")
-        self.answerToUser(message['message']['chat']['id'], "Напишите ваш новый ник:")
+        self.answerToUser(message['message']['chat']['id'], "Напишите ваш новый ник:", casual_markup)
 
     def isRegistered(self, chat_id):
         if self.db.getUser(chat_id):

@@ -1,4 +1,5 @@
 import psycopg2
+import sys
 
 
 class DataBase(object):
@@ -28,7 +29,7 @@ class DataBase(object):
         rows = cur.fetchall()
 
         if rows is None:
-            return 0
+            return []
         else:
             return rows
 
@@ -108,7 +109,7 @@ class DataBase(object):
         new_index = self.getLastId() + 1
 
         cur.execute('''INSERT INTO Users (id, chat_id, username) VALUES (%s, %s, %s);''',
-                    (new_index, chat_id, username + " " + str(new_index)))
+                    (new_index, chat_id, username))
 
         cur.execute('''INSERT INTO Flags(id) VALUES(%s);''', (new_index,))
 
@@ -192,10 +193,20 @@ class DataBase(object):
 
 
 def main():
-    db = DataBase("postgres", "ubuntu")
-    #db.initTables()
-    db.resetNight()
+    if len(sys.argv) > 1:
+        if sys.argv[1] == 'init':
+            db = DataBase("pump_bot", "ubuntu")
+            db.initTables()
 
+        elif sys.argv[1] == 'reset':
+            db = DataBase("pump_bot", "ubuntu")
+            db.resetNight()
+
+        else:
+            print("Wrong arguments; try: 'init', 'reset'")
+
+    else:
+        print("Need arguments; try: 'init', 'reset'")
 
 if __name__ == '__main__':
     main()
