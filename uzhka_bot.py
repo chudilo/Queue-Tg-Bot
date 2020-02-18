@@ -63,9 +63,27 @@ class UzhkaBot(TgBot):
             return True
 
     def saveLog(self, message):
+        keys = message['message']['chat'].keys()
+
+        if 'username' in keys:
+            username = message['message']['chat']['username']
+        else:
+            username = None
+
+        name = ''
+        if 'first_name' in keys:
+            name += message['message']['chat']['first_name']
+
+        if 'last_name' in keys:
+            name += ' ' + message['message']['chat']['last_name']
+
+        if name:
+            name = name.strip()
+        else:
+            name = None
         self.db.writeMessage(message['message']['chat']['id'],
-                             message['message']['chat']['first_name'] + " " + message['message']['chat']['last_name'],
-                             message['message']['chat']['username'],
+                             name,
+                             username,
                              message['message']['text'])
 
     def handleMessage(self, message):
@@ -91,7 +109,7 @@ class UzhkaBot(TgBot):
         if self.db.getFlag(chat_id, "set_count"):
             if text.isdigit():
                 #print(self.db.getQueue(), int(text))
-                if len(self.db.getQueue()) < int(text) :
+                if len(self.db.getQueue()) <= int(text) :
                     self.db.setCount(int(text))
                     self.db.clrUserFlag(chat_id, "set_count")
                     self.answerToUser(chat_id, self.infoMessage(), casual_markup)
