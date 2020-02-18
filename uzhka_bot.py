@@ -35,7 +35,7 @@ number_markup = {"resize_keyboard": True, "keyboard":
 closed_message = "Южка спит и детки спят\nЗавтра пампить захотят"
 
 class UzhkaBot(TgBot):
-    def __init__(self, token, database):
+    def __init__(self, token, database, user):
         self.commands = {"/start": self.start,
                     "/info": self.info,
                     "/come": self.come,
@@ -46,15 +46,15 @@ class UzhkaBot(TgBot):
 
         super().__init__(token, self.handleMessage)
 
-        self.schedule = {1:(7,21), 2:(7,21), 3:(7,21),
-                         4:(7,21), 5:(7,22), 6:(7,22), 7:(7,21),}
+        self.schedule = {0:(7,21), 1:(7,21), 2:(7,21),
+                         3:(7,21), 4:(7,22), 5:(7,22), 6:(7,21),}
 
-        self.db = DataBase("postgres", "ubuntu")
+        self.db = DataBase(database, user)
 
     def isClosed(self):
         today =  datetime.datetime.now().weekday()
         time = datetime.datetime.time(datetime.datetime.now())
-
+        
         print(self.schedule[today][0], time.hour, self.schedule[today][1])
         if self.schedule[today][0] <= time.hour < self.schedule[today][1]:
             print("FFFFFFf")
@@ -69,17 +69,20 @@ class UzhkaBot(TgBot):
                              message['message']['text'])
 
     def handleMessage(self, message):
-        self.offset = message['update_id'] + 1
+        try:
+            self.offset = message['update_id'] + 1
 
-        if not self.isRegistered(message['message']['chat']['id']):
-            self.createUser(message['message']['chat']['id'])
+            if not self.isRegistered(message['message']['chat']['id']):
+                self.createUser(message['message']['chat']['id'])
 
-        self.saveLog(message)
+            self.saveLog(message)
 
-        if message['message']['text'] in self.commands.keys():
-            self.commands[message['message']['text']](message)
-        else:
-            self.handleSplitCommands(message)
+            if message['message']['text'] in self.commands.keys():
+                self.commands[message['message']['text']](message)
+            else:
+                self.handleSplitCommands(message)
+        except Exception as e:
+            print(e)
 
     def handleSplitCommands(self, message):
         chat_id = message['message']['chat']['id']
@@ -194,10 +197,11 @@ class UzhkaBot(TgBot):
 
 
 def main():
-    token = os.environ['TEST_TOKEN']
-    database = "database.db"
+    token = os.environ['TELEGRAM_TOKEN']
+    database = "pump_bot"
+    user = "ubuntu"
 
-    bot = UzhkaBot(token, database)
+    bot = UzhkaBot(token, database, user)
     bot.run()
 
 
