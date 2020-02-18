@@ -42,6 +42,7 @@ class UzhkaBot(TgBot):
                     "/leave": self.leave,
                     "/setcount": self.setCount,
                     "/nick": self.setNickname,
+                    "/help": self.help,
         }
 
         super().__init__(token, self.handleMessage)
@@ -139,17 +140,26 @@ class UzhkaBot(TgBot):
         self.db.writeMessage(chat_id, "PUMP_BOT", None, text)
         self.sendMessage(chat_id, text, reply_markup)
 
+    def help(self, message):
+        self.answerToUser(message['message']['chat']['id'], help_message())
+
     def start(self, message):
         self.answerToUser(message['message']['chat']['id'], help_message())
+        self.db.setUserFlag(message['message']['chat']['id'], "nickname")
+        self.db.clrUserFlag(message['message']['chat']['id'], "set_count")
         self.answerToUser(message['message']['chat']['id'], "Введите свой никнейм:", casual_markup)
 
     def info(self, message):
+        self.db.clrUserFlag(message['message']['chat']['id'], "nickname")
+        self.db.clrUserFlag(message['message']['chat']['id'], "set_count")
         if not self.isClosed():
             self.answerToUser(message['message']['chat']['id'], self.infoMessage(), casual_markup)
         else:
             self.answerToUser(message['message']['chat']['id'], closed_message, casual_markup)
 
     def come(self, message):
+        self.db.clrUserFlag(message['message']['chat']['id'], "nickname")
+        self.db.clrUserFlag(message['message']['chat']['id'], "set_count")
         if not self.isClosed():
             if self.db.setUserFlag(message['message']['chat']['id'], "presence"):
                 self.db.incCount()
@@ -162,6 +172,8 @@ class UzhkaBot(TgBot):
             self.answerToUser(message['message']['chat']['id'], closed_message, casual_markup)
 
     def leave(self, message):
+        self.db.clrUserFlag(message['message']['chat']['id'], "nickname")
+        self.db.clrUserFlag(message['message']['chat']['id'], "set_count")
         if not self.isClosed():
             if self.db.clrUserFlag(message['message']['chat']['id'], "presence"):
                 self.db.decCount()
