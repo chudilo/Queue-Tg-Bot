@@ -44,6 +44,7 @@ class UzhkaBot(TgBot):
                     "/setcount": self.setCount,
                     "/nick": self.setNickname,
                     "/help": self.help,
+                    "/stat": self.stat,
         }
 
         super().__init__(token, self.handleMessage)
@@ -264,6 +265,16 @@ class UzhkaBot(TgBot):
         else:
             self.answerToUser(masterChatId, slave + " уже убежал...", casual_markup)
 
+    def stat(self, message):
+        chat_id = message['message']['chat']['id']
+        days = self.db.getWeekDays(chat_id)
+        if len(days) < 10:
+            self.answerToUser(chat_id, "Слишком мало посещений...")
+        else:
+            week = ("пн", "вт", "ср", "чт", "пт", "сб", "вс")
+            days = [day.weekday() for day in days]
+            answer = [": ".join([week[i], str(days.count(i))]) for i in range(7)]
+            self.answerToUser(chat_id, "Ваша статистика посещений по дням недели (всего {} раз):\n".format(len(days)) + "\n".join(answer))
 
 def main():
     token = os.environ['TELEGRAM_TOKEN']

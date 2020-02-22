@@ -210,9 +210,33 @@ class DataBase(object):
         cur.execute('''UPDATE State SET last_update = NULL''')
         self.connection.commit()
 
-    def getWeekDays(self, username):
+    def getWeekDays(self, chat_id):
         cur = self.connection.cursor()
 
+        cur.execute('''SELECT DISTINCT CAST(time AS DATE) FROM messages WHERE content = '/come' AND
+                        user_id = %s;''', (chat_id, ))
+
+        days = cur.fetchall()
+        if days:
+            days = [day[0] for day in days]
+            return days
+        else:
+            return []
+
+    def getWeekDaysName(self, username):
+        cur = self.connection.cursor()
+
+        cur.execute('''SELECT DISTINCT CAST(time AS DATE) FROM messages WHERE content = '/come' AND
+                        user_id = (SELECT chat_id FROM users WHERE username = %s);''', (username, ))
+
+        days = cur.fetchall()
+        if days:
+            days = [day[0] for day in days]
+            return days
+        else:
+            return []
+
+        """
         cur.execute('''SELECT time FROM messages WHERE content='/come' AND 
                             user_id=(SELECT chat_id FROM users WHERE username=%s);''', (username, ))
 
@@ -224,7 +248,7 @@ class DataBase(object):
         week = [(days_names[i], days.count(i)) for i in range(7)]
 
         return week
-
+        """
 
 def main():
     if len(sys.argv) > 1:
