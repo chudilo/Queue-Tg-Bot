@@ -9,6 +9,7 @@ import datetime
 #my_reply_markup = {"inline_keyboard":
 #                       [[{'text': "hello", 'callback_data': (str(datetime.datetime.now().timestamp()) + "  Quser_to_remove")}]]}
 
+
 def help_message():
     string = """Uzka Queue Bot v1.1.5\nИзвините, я упячко (I will fix it, probably)
     /help - вывести список команд
@@ -91,15 +92,23 @@ class UzhkaBot(TgBot):
         try:
             self.offset = message['update_id'] + 1
 
-            if not self.isRegistered(message['message']['chat']['id']):
-                self.createUser(message['message']['chat']['id'])
-
-            self.saveLog(message)
-
-            if message['message']['text'] in self.commands.keys():
-                self.commands[message['message']['text']](message)
+            if 'callback_query' in message.keys():
+                print("HERE")
+                self.pushOut(message['callback_query']['message']['chat']['id'],
+                             message['callback_query']['data'])
             else:
-                self.handleSplitCommands(message)
+                if not self.isRegistered(message['message']['chat']['id']):
+                    self.createUser(message['message']['chat']['id'])
+
+                self.saveLog(message)
+
+                print("KEYS", message['message'].keys())
+
+
+                if message['message']['text'] in self.commands.keys():
+                    self.commands[message['message']['text']](message)
+                else:
+                    self.handleSplitCommands(message)
         except Exception as e:
             print(e)
 
@@ -120,8 +129,15 @@ class UzhkaBot(TgBot):
                 else:
                     self.db.setCount(len(self.db.getQueue()))
                     self.db.clrUserFlag(chat_id, "set_count")
-                    self.answerToUser(chat_id, "Последний кораблик уплыл\nПоследний кабанчик устал...", casual_markup)
-                    self.answerToUser(chat_id, self.infoMessage(), casual_markup)
+                    #self.answerToUser(chat_id, "Последний кораблик уплыл\nПоследний кабанчик устал...", casual_markup)
+                    queue = [row[0] for row in self.db.getQueue()]
+                    callback_reply_markup = {"inline_keyboard":
+                                                 [
+                        [{'text': name, 'callback_data': name } ] # (str(datetime.datetime.now().timestamp()))
+                                                     for name in queue ]}
+
+                    self.answerToUser(chat_id, self.infoMessage(), callback_reply_markup)
+                    self.answerToUser(chat_id, "Вы можете выписать отсутствующих людей!", casual_markup)
             else:
                 self.answerToUser(chat_id, "Неверный формат ввода, попробуйте ещё раз")
 
@@ -136,7 +152,8 @@ class UzhkaBot(TgBot):
                 self.db.clrUserFlag(chat_id, "nickname")
                 self.answerToUser(chat_id, "Добро пожаловать, " + text, casual_markup)
         else:
-            self.answerToUser(message['message']['chat']['id'], message['message']['text'], casual_markup)
+            #self.answerToUser(message['message']['chat']['id'], message['message']['text'], casual_markup)
+            pass
 
     def answerToUser(self, chat_id, text, reply_markup={}):
         #reply_markup = my_reply_markup
@@ -232,6 +249,20 @@ class UzhkaBot(TgBot):
             answer += "\nПоследнее обновление: " + time.strftime("%H:%M")
 
         return answer
+
+    def pushOut(self, masterChatId, slave):
+        print("PUSH OUT", masterChatId, slave)
+        slaveChatId = self.db.getUserChatId(slave)
+        print(slaveChatId)
+        masterNick = self.db.getNickName(masterChatId)
+        print(masterNick)
+
+        if self.db.clrUserFlag(slaveChatId, "presence"):
+            self.db.decCount()
+            self.answerToUser(slaveChatId, "Вас выписал из очереди " + masterNick, casual_markup)
+            self.answerToUser(masterChatId, "Вы выписали забывашку с:")
+        else:
+            self.answerToUser(masterChatId, slave + " уже убежал...", casual_markup)
 
 
 def main():

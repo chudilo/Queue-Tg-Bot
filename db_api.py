@@ -42,6 +42,16 @@ class DataBase(object):
         #print("getCount", result)
         return result
 
+    def getUserChatId(self, username):
+        cur = self.connection.cursor()
+        cur.execute('''SELECT chat_id FROM users WHERE username = %s;''', (username, ))
+
+        print("here")
+        result = cur.fetchone()[0]
+        print("getUserChatId", result)
+
+        return result
+
     def getLastUpdate(self):
         cur = self.connection.cursor()
         cur.execute('''SELECT last_update FROM State;''')
@@ -58,6 +68,14 @@ class DataBase(object):
         cur.execute(query, (chat_id, ))
 
         return cur.fetchone()[0]
+
+    def getNickName(self, chat_id):
+        cur = self.connection.cursor()
+        cur.execute('''SELECT username FROM users WHERE chat_id = %s;''', (chat_id, ))
+
+        result = cur.fetchone()[0]
+
+        return result
 
     def getNicknames(self):
         cur = self.connection.cursor()
