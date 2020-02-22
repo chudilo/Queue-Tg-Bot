@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 import psycopg2
 import sys
 
@@ -190,6 +191,21 @@ class DataBase(object):
         cur.execute('''UPDATE State SET count = 0;''')
         cur.execute('''UPDATE State SET last_update = NULL''')
         self.connection.commit()
+
+    def getWeekDays(self, username):
+        cur = self.connection.cursor()
+
+        cur.execute('''SELECT time FROM messages WHERE content='/come' AND 
+                            user_id=(SELECT chat_id FROM users WHERE username=%s);''', (username, ))
+
+        days = cur.fetchall()
+        print(days)
+        days = [day[0].weekday() for day in days]
+
+        days_names = ('пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс')
+        week = [(days_names[i], days.count(i)) for i in range(7)]
+
+        return week
 
 
 def main():

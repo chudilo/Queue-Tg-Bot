@@ -110,10 +110,13 @@ class UzhkaBot(TgBot):
         if self.db.getFlag(chat_id, "set_count"):
             if text.isdigit():
                 #print(self.db.getQueue(), int(text))
-                if len(self.db.getQueue()) <= int(text) :
+                if int(text) > 25:
+                    self.answerToUser(chat_id, "Вы тестировщик, попробуйте ещё раз")
+                elif len(self.db.getQueue()) <= int(text) :
                     self.db.setCount(int(text))
                     self.db.clrUserFlag(chat_id, "set_count")
                     self.answerToUser(chat_id, self.infoMessage(), casual_markup)
+
                 else:
                     self.db.setCount(len(self.db.getQueue()))
                     self.db.clrUserFlag(chat_id, "set_count")
@@ -215,7 +218,12 @@ class UzhkaBot(TgBot):
         answer = "Количество людей на локации: {}".format(count)
 
         if queue:
-            answer += "\n" + ", ".join(map(str, [row[0] for row in queue]))
+            answer += "\n"
+
+            if len(queue) != count:
+                answer += "Среди них: "
+
+            answer += " , ".join(map(str, [row[0] for row in queue])) + "."
 
         if check:
             answer += "\n\nНе забудь сверить информацию\n" + "(* ^ ω ^)"
