@@ -24,12 +24,12 @@ class TgBot(object):
                                 'timeout': timeout})
         return r.json()
 
-    def sendMessage(self, chat_id, text, reply_markup={}):
-        r = requests.post(self.requestUrl+'/sendMessage',
-                          json={'chat_id': chat_id,
-                                'text': text,
-                                'reply_markup': reply_markup})
-        print(r.json())
+    def sendMessage(self, chat_id, text, reply_markup=None):
+        answer_json = {'chat_id': chat_id, 'text': text}
+        if reply_markup:
+            answer_json['reply_markup'] = reply_markup
+
+        r = requests.post(self.requestUrl+'/sendMessage', json=answer_json)
         return r.json()
 
     def sendSticker(self, chat_id, sticker):

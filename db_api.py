@@ -22,11 +22,16 @@ class DataBase(object):
         else:
             return rows[0]
 
-    def getQueue(self):
+    def getQueue(self, chat_id=None):
         cur = self.connection.cursor()
-        cur.execute('''SELECT username FROM users INNER JOIN flags
-                       ON users.id = flags.id
-                       WHERE presence = true;''')
+        if not chat_id:
+            cur.execute('''SELECT username FROM users INNER JOIN flags
+                           ON users.id = flags.id
+                           WHERE presence = true;''')
+        else:
+            cur.execute('''SELECT username FROM users INNER JOIN flags
+                           ON users.id = flags.id
+                           WHERE presence = true AND chat_id <> %s;''', (chat_id, ))
         rows = cur.fetchall()
 
         if rows is None:
@@ -250,10 +255,11 @@ class DataBase(object):
         return week
         """
 
+
 def main():
     if len(sys.argv) > 1:
         if sys.argv[1] == 'init':
-            db = DataBase("pump_bot", "ubuntu")
+            db = DataBase("test", "ubuntu")
             db.initTables()
 
         elif sys.argv[1] == 'reset':

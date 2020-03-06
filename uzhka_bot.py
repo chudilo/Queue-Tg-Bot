@@ -1,66 +1,33 @@
 # -*- coding: utf-8 -*-
 import os
+import datetime
 from telegram_api import TgBot
 from db_api import DataBase
-import datetime
+from constant import *
 
-# self.sendSticker(message['message']['chat']['id'], "CAADAgADAQADTpCiDaNuAUvXQvO8FgQ")
-
-#my_reply_markup = {"inline_keyboard":
-#                       [[{'text': "hello", 'callback_data': (str(datetime.datetime.now().timestamp()) + "  Quser_to_remove")}]]}
-
-
-def help_message():
-    string = """Uzka Queue Bot v1.1.5\nИзвините, я упячко (I will fix it, probably)
-    /help - вывести список команд
-    /info - узнать количество человек на южке
-    /nick - задать себе имя
-    /setcount - задать количество человек на локации
-    /come - приехать на южку
-    /leave - уехать с южки
-
-По всем вопросам неопределенного поведения писать @chudikchudik"""
-    return string
-
-casual_markup = {"resize_keyboard": True, "keyboard":
-                [[{"text": "/help"}, {"text": "/nick"}, {"text": "/info"}],
-                [{"text": "/come"}, {"text": "/leave"}],
-                [{"text": "/setcount"}]]}
-
-number_markup = {"resize_keyboard": True, "keyboard":
-                [[{"text": "1"}, {"text": "2"}, {"text": "3"}],
-                [{"text": "4"}, {"text": "5"}, {"text": "6"}],
-                [{"text": "7"}, {"text": "8"}, {"text": "9"}],
-                [{"text": "0"}]]}
-
-closed_message = "Южка спит и детки спят\nЗавтра пампить захотят"
 
 class UzhkaBot(TgBot):
     def __init__(self, token, database, user):
         self.commands = {"/start": self.start,
-                    "/info": self.info,
-                    "/come": self.come,
-                    "/leave": self.leave,
-                    "/setcount": self.setCount,
-                    "/nick": self.setNickname,
-                    "/help": self.help,
-                    "/stat": self.stat,
+                         "/info": self.info,
+                         "/come": self.come,
+                         "/leave": self.leave,
+                         "/setcount": self.setCount,
+                         "/nick": self.setNickname,
+                         "/help": self.help,
+                         "/stat": self.stat,
         }
 
         super().__init__(token, self.handleMessage)
 
         self.schedule = {0:(7,21), 1:(7,21), 2:(7,21),
                          3:(7,21), 4:(7,22), 5:(7,22), 6:(7,21),}
-
         self.db = DataBase(database, user)
 
     def isClosed(self):
         today =  datetime.datetime.now().weekday()
         time = datetime.datetime.time(datetime.datetime.now())
-        
-        print(self.schedule[today][0], time.hour, self.schedule[today][1])
         if self.schedule[today][0] <= time.hour < self.schedule[today][1]:
-            print("FFFFFFf")
             return False
         else:
             return True
@@ -128,17 +95,24 @@ class UzhkaBot(TgBot):
                     self.answerToUser(chat_id, self.infoMessage(), casual_markup)
 
                 else:
+                    if int(text) == 0:
+                        self.db.clrUserFlag(chat_id, "presence")
+
                     self.db.setCount(len(self.db.getQueue()))
                     self.db.clrUserFlag(chat_id, "set_count")
                     #self.answerToUser(chat_id, "Последний кораблик уплыл\nПоследний кабанчик устал...", casual_markup)
-                    queue = [row[0] for row in self.db.getQueue()]
-                    callback_reply_markup = {"inline_keyboard":
-                                                 [
-                        [{'text': name, 'callback_data': name } ] # (str(datetime.datetime.now().timestamp()))
-                                                     for name in queue ]}
+                    queue = [row[0] for row in self.db.getQueue(chat_id=chat_id)]
+                    if queue:
+                        callback_reply_markup = {"inline_keyboard":
+                                                     [
+                            [{'text': name, 'callback_data': name } ] # (str(datetime.datetime.now().timestamp()))
+                                                         for name in queue ]}
 
-                    self.answerToUser(chat_id, self.infoMessage(), callback_reply_markup)
-                    self.answerToUser(chat_id, "Вы можете выписать отсутствующих людей!", casual_markup)
+                        self.answerToUser(chat_id, self.infoMessage(), callback_reply_markup)
+                        self.answerToUser(chat_id, "Вы можете выписать отсутствующих людей!", casual_markup)
+                    else:
+                        self.answerToUser(chat_id, self.infoMessage(), casual_markup)
+
             else:
                 self.answerToUser(chat_id, "Неверный формат ввода, попробуйте ещё раз")
 
@@ -156,16 +130,17 @@ class UzhkaBot(TgBot):
             #self.answerToUser(message['message']['chat']['id'], message['message']['text'], casual_markup)
             pass
 
-    def answerToUser(self, chat_id, text, reply_markup={}):
+    def answerToUser(self, chat_id, text, reply_markup=None):
         #reply_markup = my_reply_markup
+
         self.db.writeMessage(chat_id, "PUMP_BOT", None, text)
         self.sendMessage(chat_id, text, reply_markup)
 
     def help(self, message):
-        self.answerToUser(message['message']['chat']['id'], help_message())
+        self.answerToUser(message['message']['chat']['id'], help_message)
 
     def start(self, message):
-        self.answerToUser(message['message']['chat']['id'], help_message())
+        self.answerToUser(message['message']['chat']['id'], help_message)
         self.db.setUserFlag(message['message']['chat']['id'], "nickname")
         self.db.clrUserFlag(message['message']['chat']['id'], "set_count")
         self.answerToUser(message['message']['chat']['id'], "Введите свой никнейм:", casual_markup)
@@ -276,9 +251,10 @@ class UzhkaBot(TgBot):
             answer = [": ".join([week[i], str(days.count(i))]) for i in range(7)]
             self.answerToUser(chat_id, "Ваша статистика посещений по дням недели (всего {} раз):\n".format(len(days)) + "\n".join(answer))
 
+
 def main():
-    token = os.environ['TELEGRAM_TOKEN']
-    database = "pump_bot"
+    token = os.environ['TEST_TOKEN']
+    database = "test"
     user = "ubuntu"
 
     bot = UzhkaBot(token, database, user)
