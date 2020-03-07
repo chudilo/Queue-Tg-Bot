@@ -9,7 +9,7 @@ https://t.me/PumpStatBot
 1. Бот написан на языке *python*, работа с API Telegram реализована с помощью библиотеки *requests*.
 2. Работа с базами данных (*sqlite*, позднее переехал на *postgresql*).
 3. (WIP) *nginx* и веб сервер на *Flask* и для использования Telegram WebHook.
-4. Хост на облачном сервере amazon lightsail (*systemd*, *crontab*).
+4. Хост на облачном сервере amazon lightsail (*systemd*, *cron*).
 
 
 ### Команды

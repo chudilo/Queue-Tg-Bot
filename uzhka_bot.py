@@ -117,13 +117,16 @@ class UzhkaBot(TgBot):
                 self.answerToUser(chat_id, "Неверный формат ввода, попробуйте ещё раз")
 
         elif self.db.getFlag(chat_id, "nickname"):
-            if len(text) > 13:
+            new_nick = text.strip()
+            if len(new_nick) > 13:
                 self.answerToUser(chat_id, "Слишком длинный вариант (макс. 13), попродуйте ещё раз")
                 #self.answerToUser(message['message']['chat']['id'], "Добро пожаловать, ")
-            elif text in self.db.getNicknames():
+            elif new_nick in self.db.getNicknames():
                 self.answerToUser(chat_id, "Такое имя уже используется, попробуйте ещё раз")
+            elif True in (char in {',', '.', ';', ':'} for char in new_nick):
+                self.answerToUser(chat_id, "Недопустимый символ, попробуйте ещё раз")
             else:
-                self.db.setNickname(chat_id, text)
+                self.db.setNickname(chat_id, new_nick)
                 self.db.clrUserFlag(chat_id, "nickname")
                 self.answerToUser(chat_id, "Добро пожаловать, " + text, casual_markup)
         else:
@@ -160,7 +163,7 @@ class UzhkaBot(TgBot):
             if self.db.setUserFlag(message['message']['chat']['id'], "presence"):
                 self.db.incCount()
                 self.answerToUser(message['message']['chat']['id'],
-                                 "Добро пожаловать, снова.\n" + self.infoMessage(check=True), casual_markup)
+                                 "Добро пожаловать, {}.\n\n".format(self.db.getNickName(message['message']['chat']['id'])) + self.infoMessage(check=True), casual_markup)
             else:
                 self.answerToUser(message['message']['chat']['id'],
                                   "Я знаю, что ты ещё тут...)", casual_markup)
@@ -174,7 +177,7 @@ class UzhkaBot(TgBot):
             if self.db.clrUserFlag(message['message']['chat']['id'], "presence"):
                 self.db.decCount()
                 self.answerToUser(message['message']['chat']['id'],
-                                  "Пока-пока!\n" + self.infoMessage(check=True), casual_markup)
+                                  self.infoMessage(check=True), casual_markup)
             else:
                 self.answerToUser(message['message']['chat']['id'],
                                   "Но ты же ещё не приехал...(", casual_markup)
@@ -216,7 +219,7 @@ class UzhkaBot(TgBot):
             if len(queue) != count:
                 answer += "Среди них: "
 
-            answer += " , ".join(map(str, [row[0] for row in queue])) + "."
+            answer += ", ".join(map(str, [row[0] for row in queue])) + "."
 
         if check:
             answer += "\n\nНе забудь сверить информацию\n" + "(* ^ ω ^)"
@@ -253,8 +256,8 @@ class UzhkaBot(TgBot):
 
 
 def main():
-    token = os.environ['TEST_TOKEN']
-    database = "test"
+    token = os.environ['TELEGRAM_TOKEN']
+    database = "pump_bot"
     user = "ubuntu"
 
     bot = UzhkaBot(token, database, user)
