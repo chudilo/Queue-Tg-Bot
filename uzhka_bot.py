@@ -119,7 +119,7 @@ class UzhkaBot(TgBot):
         elif self.db.getFlag(chat_id, "nickname"):
             new_nick = text.strip()
             if len(new_nick) > 13:
-                self.answerToUser(chat_id, "Слишком длинный вариант (макс. 13), попродуйте ещё раз")
+                self.answerToUser(chat_id, "Слишком длинный вариант (макс. 13), попробуйте ещё раз")
                 #self.answerToUser(message['message']['chat']['id'], "Добро пожаловать, ")
             elif new_nick in self.db.getNicknames():
                 self.answerToUser(chat_id, "Такое имя уже используется, попробуйте ещё раз")
@@ -239,7 +239,7 @@ class UzhkaBot(TgBot):
         if self.db.clrUserFlag(slaveChatId, "presence"):
             self.db.decCount()
             self.answerToUser(slaveChatId, "Вас выписал из очереди " + masterNick, casual_markup)
-            self.answerToUser(masterChatId, "Вы выписали забывашку с:")
+            self.answerToUser(masterChatId, "{} спит, но вы выписали забывашку с:".format(slave))
         else:
             self.answerToUser(masterChatId, slave + " уже убежал...", casual_markup)
 
