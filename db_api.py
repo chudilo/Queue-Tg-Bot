@@ -1,7 +1,10 @@
 # -*- encoding: utf-8 -*-
 import psycopg2
 import sys
-
+import datetime
+from itertools import chain
+from collections import Counter
+import re
 
 class DataBase(object):
     def __init__(self, database, user, password=""):
@@ -254,6 +257,84 @@ class DataBase(object):
 
         return week
         """
+    def getAllChatId(self):
+        cur = self.connection.cursor()
+
+        cur.execute('''SELECT chat_id FROM users;''')
+
+        return [item[0] for item in cur.fetchall()]
+
+    def getAllBotMessages(self):
+        cur = self.connection.cursor()
+
+        cur.execute('''SELECT content, time FROM messages
+                       WHERE tg_name='PUMP_BOT' OR tg_id='TgBot';''')
+
+        return cur.fetchall()
+
+
+def getDayCount(message):
+    inf = re.findall(r'Количество людей на южке: \d+|Количество людей на локации: \d+', message)
+    if inf:
+        return int(re.findall(r'\d+', inf[0])[0])
+    else:
+        return 0
+
+def getMsgs():
+    db = DataBase("pump_bot", "chudik")
+    messages = db.getAllBotMessages()
+    # print(len(messages))
+    dated_messages = dict()
+
+    for message in messages:
+        ord = message[1].toordinal()
+        if ord not in dated_messages.keys():
+            dated_messages[ord] = [message[0]]
+        else:
+            dated_messages[ord].append(message[0])
+
+    for key in dated_messages:
+        max_count = 0
+        for message in dated_messages[key]:
+            today_count = getDayCount(message)
+            if 20 > today_count > max_count:
+                max_count = today_count
+        dated_messages[key] = max_count
+
+    graph = {'day': [], 'counter': []}
+    for key in dated_messages.keys():
+        graph['day'].append(datetime.date.fromordinal(key))
+        graph['counter'].append(dated_messages[key])
+
+    return graph
+
+def getStat():
+    db = DataBase("pump_bot", "chudik")
+
+    all_chat_id = db.getAllChatId()
+
+    # datetime.datetime(2019, 9, 21) + datetime.timedelta(days=1)
+
+    all_days = [list(map(datetime.datetime.toordinal, db.getWeekDays(id))) for id in all_chat_id]
+    counter = Counter(list(chain.from_iterable(all_days)))
+    graph = {'day': [], 'counter': []}
+    for key in counter.keys():
+        graph['day'].append(datetime.date.fromordinal(key))
+        graph['counter'].append(counter[key])
+
+    day = graph['day'][0]
+    while day < datetime.date.today():
+        if day not in graph['day']:
+            i = graph['day'].index(day - datetime.timedelta(days=1))
+            graph['day'].insert(i + 1, day)
+            graph['counter'].insert(i + 1, 0)
+
+        day += datetime.timedelta(days=1)
+
+    # graph = [[datetime.date.fromordinal(key)], counter[key]] for key in counter.keys()]
+
+
+    return graph
 
 
 def main():

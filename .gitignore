@@ -8,3 +8,5 @@
 *.save
 *.swp
 *.pyc
+*.idea
+*.ipynb_checkpoints/

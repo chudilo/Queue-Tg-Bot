@@ -255,6 +255,16 @@ class UzhkaBot(TgBot):
             self.answerToUser(chat_id, "Ваша статистика посещений по дням недели (всего {} раз):\n".format(len(days)) + "\n".join(answer))
 
 
+def sendAll():
+    token = os.environ['TELEGRAM_TOKEN']
+    database = "test"
+    user = "chudik"
+
+    bot = UzhkaBot(token, database, user)
+    text = "Тестовая рассылка для меня и для Толи тоже"
+    for user in bot.db.getAllChatId():
+        bot.sendMessage(user, text)
+
 def main():
     token = os.environ['TELEGRAM_TOKEN']
     database = "pump_bot"
