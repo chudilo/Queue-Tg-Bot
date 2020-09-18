@@ -5,6 +5,12 @@ from telegram_api import TgBot
 from db_api import DataBase
 from constant import *
 
+import logging
+
+FORMAT = '%(asctime)-15s %(levelname)s %(message)s'
+logging.basicConfig(filename='/logs/pump_queries.log', level=logging.DEBUG, format=FORMAT)
+logger = logging.getLogger(__name__)
+
 
 class UzhkaBot(TgBot):
     def __init__(self, token, database, user):
@@ -58,6 +64,7 @@ class UzhkaBot(TgBot):
 
     def handleMessage(self, message):
         try:
+            logger.info(message)
             self.offset = message['update_id'] + 1
 
             if 'callback_query' in message.keys():
@@ -78,7 +85,7 @@ class UzhkaBot(TgBot):
                 else:
                     self.handleSplitCommands(message)
         except Exception as e:
-            print(e)
+            logger.error(e)
 
     def handleSplitCommands(self, message):
         chat_id = message['message']['chat']['id']
@@ -257,13 +264,37 @@ class UzhkaBot(TgBot):
 
 def sendAll():
     token = os.environ['TELEGRAM_TOKEN']
-    database = "test"
-    user = "chudik"
+    database = "pump_bot"
+    user = "ubuntu"
 
     bot = UzhkaBot(token, database, user)
-    text = "Тестовая рассылка для меня и для Толи тоже"
+    text = """Сегодня прошло пол года с момента запуска этого бота.
+Много вещей претерпели изменения, комьюнити южки тоже, а я все так же сижу и лампово набираю код по вечерам.
+
+Несмотря на некоторую неоднозначность (Плейдей, дай доступ к БД!), бот пользуется спросом у своей аудитории. За пол года:
+Сообщений отправлено: ~10к.
+Люди отметились: 652 раза
+Отметили длину очереди: 870 раз
+Просмотрели info: 5842 раз
+
+Спасибо тестерам 🐗 ☁  🍋, активным пользователям 🤖 👟 ⛹\u200d♂, людям, которые врываются в 0 и отмечают 6 человек 🐕, а также просто скромным обзорщикам очереди 🦊
+ 
+Общая статистика посещений (по количеству и по загруженности) будет ниже.
+Также есть возможность узнать свою статистику по дням недели с помощью команды /stat
+Если кто-то хочет посмотреть что-то конкретное, добро пожаловать в личку.
+
+По всем предложениям, а также вопросам неопределенного поведения, писать, как обычно: @chudikchudik
+
+p.s. некоторое время будьте осторожны и воздержитесь от посещения мест скопления людей
+"""
+    text2 = 'https://i.imgur.com/5TdqRYL.png'
+    text3 = 'https://i.imgur.com/YU02i9Z.png'
+
     for user in bot.db.getAllChatId():
         bot.sendMessage(user, text)
+        bot.sendMessage(user, text2)
+        bot.sendMessage(user, text3)
+
 
 def main():
     token = os.environ['TELEGRAM_TOKEN']

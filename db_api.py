@@ -136,7 +136,7 @@ class DataBase(object):
         new_index = self.getLastId() + 1
 
         cur.execute('''INSERT INTO Users (id, chat_id, username) VALUES (%s, %s, %s);''',
-                    (new_index, chat_id, username))
+                    (new_index, chat_id, username + str(new_index)))
 
         cur.execute('''INSERT INTO Flags(id) VALUES(%s);''', (new_index,))
 
@@ -309,7 +309,7 @@ def getMsgs():
     return graph
 
 def getStat():
-    db = DataBase("pump_bot", "chudik")
+    db = DataBase("pump_bot", "ubuntu")
 
     all_chat_id = db.getAllChatId()
 

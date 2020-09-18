@@ -54,12 +54,16 @@ class TgBot(object):
         app.run(port='5000')
 
     def startGetUpdate(self):
+        from uzhka_bot import logger
         while True:
-            update = self.getUpdates(timeout=30)
-            print("update", update)
-            if update['ok']:
-                for message in update['result']:
-                    self.handleMessage(message)
+            try:
+                update = self.getUpdates(timeout=30)
+                logger.debug(update)
+                if update['ok']:
+                    for message in update['result']:
+                        self.handleMessage(message)
+            except Exception as e:
+                logger.error(e)
 
     def run(self, webHook=False):
         if webHook:
