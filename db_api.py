@@ -100,7 +100,8 @@ class DataBase(object):
         cur.execute('''CREATE TABLE Users
         (id INT PRIMARY KEY,
         chat_id INT NOT NULL CONSTRAINT Users_unique_chat_id UNIQUE,
-        username VARCHAR(40) NOT NULL CONSTRAINT Users_unique_username UNIQUE
+        username VARCHAR(40) NOT NULL CONSTRAINT Users_unique_username UNIQUE,
+        piu_nick VARCHAR(10) UNIQUE 
         );
         ''')
 
